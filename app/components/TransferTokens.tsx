@@ -1,9 +1,21 @@
+/** @format */
+
 "use client";
-import { useState, useEffect } from "react";
-import { Address, getOrdersHistory, getPortfolio, getTokens, useOkto, UserPortfolioData } from "@okto_web3/react-sdk";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Address,
+  getOrdersHistory,
+  getPortfolio,
+  getTokens,
+  OktoClient,
+  useOkto,
+  UserPortfolioData,
+} from "@okto_web3/react-sdk";
 import { tokenTransfer } from "@okto_web3/react-sdk/userop";
-import { getChains } from '@okto_web3/react-sdk';
+import { getChains } from "@okto_web3/react-sdk";
 import { useRouter } from "next/navigation";
+import CopyButton from "../components/CopyButton";
+import ViewExplorerURL from "../components/ViewExplorerURL";
 
 // Types
 interface TokenOption {
@@ -28,7 +40,9 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) =>
       <div className="bg-gray-800 rounded-lg p-6 w-full max-w-xl">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-white">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            ✕
+          </button>
         </div>
         <div className="max-h-[70vh] overflow-y-auto">{children}</div>
       </div>
@@ -36,15 +50,24 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) =>
   );
 
 const RefreshIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38" />
   </svg>
 );
 
-function TokenTransfer() {
+function TransferTokens() {
   const oktoClient = useOkto();
-  const router = useRouter();
+  const navigate = useRouter();
 
   // Form state
   const [chains, setChains] = useState<any[]>([]);
@@ -55,6 +78,11 @@ function TokenTransfer() {
   const [selectedToken, setSelectedToken] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [recipient, setRecipient] = useState<string>("");
+  const [tokenBalance, setTokenBalance] = useState<{
+    balance: string;
+    usdtBalance: string;
+    inrBalance: string;
+  } | null>(null);
 
   // Transaction state
   const [jobId, setJobId] = useState<string | null>(null);
@@ -89,9 +117,8 @@ function TokenTransfer() {
     closeAllModals();
   };
 
-
   const validateFormData = () => {
-    const token = tokens.find(t => t.symbol === selectedToken);
+    const token = tokens.find((t) => t.symbol === selectedToken);
     if (!token) throw new Error("Please select a valid token");
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
       throw new Error("Please enter a valid amount");
@@ -102,7 +129,7 @@ function TokenTransfer() {
       amount: BigInt(amount),
       recipient: recipient as Address,
       token: token.address as Address,
-      caip2Id: selectedChain
+      caip2Id: selectedChain,
     };
   };
 
@@ -118,35 +145,6 @@ function TokenTransfer() {
     };
     fetchChains();
   }, [oktoClient]);
-
-  useEffect(() => {
-    const fetchPortfolio = async () => {
-      try {
-        const data = await getPortfolio(oktoClient); // Fetch data
-        setPortfolio(data); // Update state
-
-        if (data?.groupTokens) { // Ensure data exists
-          const updatedBalances = data.groupTokens.map(group =>
-            group.tokens.map(token => ({
-              symbol: token.symbol,
-              balance: token.balance,
-              usdtBalance: (parseFloat(token.holdingsPriceUsdt) * parseFloat(token.balance)).toFixed(4),
-              inrBalance: (parseFloat(token.holdingsPriceInr) * parseFloat(token.balance)).toFixed(4)
-            }))
-          ).flat(); // Flatten to get an array of tokens
-
-          setPortfolioBalance(updatedBalances);
-        }
-      } catch (error: any) {
-        console.error("Error fetching portfolio:", error);
-        setError(`Failed to fetch portfolio: ${error.message}`);
-      }
-    };
-
-    fetchPortfolio();
-  }, [oktoClient]);
-
-
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -169,6 +167,7 @@ function TokenTransfer() {
             decimals: token.decimals,
             caipId: token.caipId,
           }));
+
         setTokens(filteredTokens);
       } catch (error: any) {
         console.error("Error fetching tokens:", error);
@@ -177,8 +176,78 @@ function TokenTransfer() {
         setLoadingTokens(false);
       }
     };
+
     fetchTokens();
   }, [selectedChain, oktoClient]);
+
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      try {
+        const data = await getPortfolio(oktoClient);
+        setPortfolio(data);
+
+        // Process portfolio data into a more usable format
+        if (data?.groupTokens) {
+          // Create a map of all tokens with their balances
+          const tokenBalanceMap = new Map();
+
+          // Process direct tokens in groupTokens
+          data.groupTokens.forEach((group) => {
+            // Some items in groupTokens are direct tokens
+            if (group.aggregationType === "token") {
+              tokenBalanceMap.set(group.symbol, {
+                balance: group.balance,
+                usdtBalance: group.holdingsPriceUsdt,
+                inrBalance: group.holdingsPriceInr,
+              });
+            }
+
+            // Some items have nested tokens
+            if (group.tokens && group.tokens.length > 0) {
+              group.tokens.forEach((token) => {
+                tokenBalanceMap.set(token.symbol, {
+                  balance: token.balance,
+                  usdtBalance: token.holdingsPriceUsdt,
+                  inrBalance: token.holdingsPriceInr,
+                });
+              });
+            }
+          });
+
+          // If we have a selected token, update its balance
+          if (selectedToken && tokenBalanceMap.has(selectedToken)) {
+            setTokenBalance(tokenBalanceMap.get(selectedToken));
+          } else {
+            setTokenBalance(null);
+          }
+
+          // Store the map for later use
+          setPortfolioBalance(
+            Array.from(tokenBalanceMap.entries()).map(([symbol, data]) => ({
+              symbol,
+              ...data,
+            }))
+          );
+        }
+      } catch (error: any) {
+        console.error("Error fetching portfolio:", error);
+        setError(`Failed to fetch portfolio: ${error.message}`);
+      }
+    };
+
+    fetchPortfolio();
+  }, [oktoClient, selectedToken]);
+
+  // Function to handle token selection
+  const handleTokenSelect = (symbol: string) => {
+    setSelectedToken(symbol);
+
+    // Update token balance immediately if we have portfolio data
+    if (portfolioBalance) {
+      const tokenData = portfolioBalance.find((item) => item.symbol === symbol);
+      setTokenBalance(tokenData || null);
+    }
+  };
 
   // Transaction handlers
   const handleGetOrderHistory = async (id?: string) => {
@@ -197,15 +266,15 @@ function TokenTransfer() {
         intentType: "TOKEN_TRANSFER",
       });
       setOrderHistory(orders?.[0]);
-      console.log('Refreshed Order History:', orders);
+      console.log("Refreshed Order History:", orders);
       setActiveModal("orderHistory");
     } catch (error: any) {
-      console.error('Error in fetching order history', error);
+      console.error("Error in fetching order history", error);
       setError(`Error fetching transaction details: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   const refreshOrderHistory = async () => {
     if (!jobId) {
@@ -221,7 +290,7 @@ function TokenTransfer() {
       });
       setOrderHistory(orders?.[0]);
     } catch (error: any) {
-      console.error('Error refreshing order history', error);
+      console.error("Error refreshing order history", error);
       setError(`Error refreshing transaction details: ${error.message}`);
     } finally {
       setIsRefreshing(false);
@@ -234,6 +303,8 @@ function TokenTransfer() {
 
     try {
       const transferParams = validateFormData();
+      // Note overher: you can directly import tokenTransfer from the @okto_web3/react-sdk
+      // On doing so, you'll directly get the jobId and you won't have to follow the below code.
       const userOp = await tokenTransfer(oktoClient, transferParams);
       const signedOp = await oktoClient.signUserOp(userOp);
       const jobId = await oktoClient.executeUserOp(signedOp);
@@ -242,9 +313,9 @@ function TokenTransfer() {
       await handleGetOrderHistory(jobId);
       showModal("jobId");
 
-      console.log('Transfer jobId:', jobId);
+      console.log("Transfer jobId:", jobId);
     } catch (error: any) {
-      console.error('Error in token transfer:', error);
+      console.error("Error in token transfer:", error);
       setError(`Error in token transfer: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -260,9 +331,9 @@ function TokenTransfer() {
       const userOp = await tokenTransfer(oktoClient, transferParams);
       setUserOp(userOp);
       showModal("unsignedOp");
-      console.log('UserOp:', userOp);
+      console.log("UserOp:", userOp);
     } catch (error: any) {
-      console.error('Error in token transfer:', error);
+      console.error("Error in token transfer:", error);
       setError(`Error in creating user operation: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -282,9 +353,9 @@ function TokenTransfer() {
       const signedOp = await oktoClient.signUserOp(userOp);
       setSignedUserOp(signedOp);
       showModal("signedOp");
-      console.log('Signed UserOp', signedOp);
+      console.log("Signed UserOp", signedOp);
     } catch (error: any) {
-      console.error('Error in signing the userop:', error);
+      console.error("Error in signing the userop:", error);
       setError(`Error in signing transaction: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -305,33 +376,37 @@ function TokenTransfer() {
       setJobId(jobId);
       await handleGetOrderHistory(jobId);
       showModal("jobId");
-      console.log('Job Id', jobId);
+      console.log("Job Id", jobId);
     } catch (error: any) {
-      console.error('Error in executing the userop:', error);
+      console.error("Error in executing the userop:", error);
       setError(`Error in executing transaction: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
-
-
   // Render form fields
   const renderForm = () => (
     <div className="space-y-4">
       {/* Network Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">Select Network</label>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Select Network
+        </label>
         <select
           className="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white"
           value={selectedChain}
-          onChange={(e) => setSelectedChain(e.target.value)}
+          onChange={(e) => {
+            setSelectedChain(e.target.value);
+            setSelectedToken("");
+            setAmount("");
+            setRecipient("");
+          }}
           disabled={isLoading}
         >
-          <option value="" disabled>Select a network</option>
+          <option value="" disabled>
+            Select a network
+          </option>
           {chains.map((chain) => (
             <option key={chain.chainId} value={chain.caipId}>
               {chain.networkName} ({chain.caipId})
@@ -342,20 +417,29 @@ function TokenTransfer() {
 
       {/* Token Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">Select Token</label>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Select Token
+        </label>
         <select
           className="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white"
           value={selectedToken}
-          onChange={(e) => setSelectedToken(e.target.value)}
+          onChange={(e) => handleTokenSelect(e.target.value)}
           disabled={isLoading || loadingTokens || !selectedChain}
         >
           <option value="" disabled>
-            {loadingTokens ? "Loading tokens..." :
-              !selectedChain ? "Select a network first" :
-                tokens.length === 0 ? "No tokens available" : "Select a token"}
+            {loadingTokens
+              ? "Loading tokens..."
+              : !selectedChain
+              ? "Select a network first"
+              : tokens.length === 0
+              ? "No tokens available"
+              : "Select a token"}
           </option>
           {tokens.map((token) => (
-            <option key={`${token.caipId}-${token.address}`} value={token.symbol}>
+            <option
+              key={`${token.caipId}-${token.address}`}
+              value={token.symbol}
+            >
               {token.symbol} - {token.address || "native"}
             </option>
           ))}
@@ -367,9 +451,29 @@ function TokenTransfer() {
         <label className="flex justify-between block text-sm font-medium text-gray-300 mb-1">
           <p>Amount (in smallest unit):</p>
           <p>
-            Balance: {portfolioBalance?.map(pb => Number(pb.balance).toFixed(4)).join(", ") || "N/A"} &nbsp;
-            INR: {portfolioBalance?.map(pb => pb.inrBalance).join(", ") || "N/A"} &nbsp;
-            USDT: {portfolioBalance?.map(pb => pb.usdtBalance).join(", ") || "N/A"}
+            {selectedChain && (
+              <>
+                Balance:{" "}
+                {selectedToken &&
+                portfolioBalance?.find((pb) => pb.symbol === selectedToken)
+                  ?.balance !== undefined
+                  ? Number(
+                      portfolioBalance.find((pb) => pb.symbol === selectedToken)
+                        ?.balance
+                    ).toFixed(4)
+                  : "N/A"}{" "}
+                &nbsp; INR:{" "}
+                {(selectedToken &&
+                  portfolioBalance?.find((pb) => pb.symbol === selectedToken)
+                    ?.inrBalance) ||
+                  "N/A"}{" "}
+                &nbsp; USDT:{" "}
+                {(selectedToken &&
+                  portfolioBalance?.find((pb) => pb.symbol === selectedToken)
+                    ?.usdtBalance) ||
+                  "N/A"}
+              </>
+            )}
           </p>
         </label>
         <input
@@ -381,14 +485,19 @@ function TokenTransfer() {
           disabled={isLoading}
         />
         <small className="text-gray-400">
-          {selectedToken && tokens.find((t) => t.symbol === selectedToken)?.decimals &&
-            `This token has ${tokens.find((t) => t.symbol === selectedToken)?.decimals} decimals`}
+          {selectedToken &&
+            tokens.find((t) => t.symbol === selectedToken)?.decimals &&
+            `This token has ${
+              tokens.find((t) => t.symbol === selectedToken)?.decimals
+            } decimals`}
         </small>
       </div>
 
       {/* Recipient Address */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">Recipient Address</label>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Recipient Address
+        </label>
         <input
           type="text"
           className="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white"
@@ -404,14 +513,26 @@ function TokenTransfer() {
         <button
           className="w-full p-3 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors disabled:bg-blue-800 disabled:opacity-50"
           onClick={handleTransferToken}
-          disabled={isLoading || !selectedChain || !selectedToken || !amount || !recipient}
+          disabled={
+            isLoading ||
+            !selectedChain ||
+            !selectedToken ||
+            !amount ||
+            !recipient
+          }
         >
           {isLoading ? "Processing..." : "Transfer Token (Direct)"}
         </button>
         <button
           className="w-full p-3 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors disabled:bg-purple-800 disabled:opacity-50"
           onClick={handleTokenTransferUserOp}
-          disabled={isLoading || !selectedChain || !selectedToken || !amount || !recipient}
+          disabled={
+            isLoading ||
+            !selectedChain ||
+            !selectedToken ||
+            !amount ||
+            !recipient
+          }
         >
           {isLoading ? "Processing..." : "Create Token Transfer UserOp"}
         </button>
@@ -432,7 +553,8 @@ function TokenTransfer() {
           <p>Your transaction has been submitted successfully.</p>
           <div className="bg-gray-700 p-3 rounded">
             <p className="text-sm text-gray-300 mb-1">Job ID:</p>
-            <p className="font-mono break-all">{jobId}<button className="bg-gray-200 text-black px-2 hover:bg-indigo-300 mx-2" onClick={() => copyToClipboard(JSON.stringify(jobId))}>Copy</button></p>
+            <CopyButton text={jobId ?? ""} />
+            <p className="font-mono break-all">{jobId}</p>
           </div>
           <div className="flex justify-center pt-2">
             <button
@@ -457,17 +579,26 @@ function TokenTransfer() {
           <div className="bg-gray-700 p-3 rounded">
             <p className="text-sm text-gray-300 mb-1">Transaction Details:</p>
             <div className="bg-gray-900 p-2 rounded font-mono text-sm overflow-auto max-h-40">
-              <button className="bg-gray-200 text-black px-2 hover:bg-indigo-300" onClick={() => copyToClipboard(JSON.stringify(userOp, null, 2))}>Copy</button>
-              <pre >{JSON.stringify(userOp, null, 2)}</pre>
+              <CopyButton text={JSON.stringify(userOp, null, 2) ?? ""} />
+              <pre>{JSON.stringify(userOp, null, 2)}</pre>
             </div>
           </div>
           <div className="bg-gray-700 p-3 rounded">
             <p className="text-sm text-gray-300 mb-1">Summary:</p>
             <ul className="space-y-1">
-              <li><span className="text-gray-400">Token:</span> {selectedToken}</li>
-              <li><span className="text-gray-400">Amount:</span> {amount}</li>
-              <li><span className="text-gray-400">Recipient:</span> {recipient}</li>
-              <li><span className="text-gray-400">Network:</span> {chains.find(c => c.caipId === selectedChain)?.networkName}</li>
+              <li>
+                <span className="text-gray-400">Token:</span> {selectedToken}
+              </li>
+              <li>
+                <span className="text-gray-400">Amount:</span> {amount}
+              </li>
+              <li>
+                <span className="text-gray-400">Recipient:</span> {recipient}
+              </li>
+              <li>
+                <span className="text-gray-400">Network:</span>{" "}
+                {chains.find((c) => c.caipId === selectedChain)?.networkName}
+              </li>
             </ul>
           </div>
           <div className="flex justify-center pt-2">
@@ -489,12 +620,15 @@ function TokenTransfer() {
         title="Sign Completed"
       >
         <div className="space-y-4 text-white">
-          <p>Your transaction has been signed successfully and is ready to be executed.</p>
+          <p>
+            Your transaction has been signed successfully and is ready to be
+            executed.
+          </p>
           <div className="bg-gray-700 p-3 rounded">
-            <p className="text-sm text-gray-300 mb-1" >Signed Transaction:</p>
+            <p className="text-sm text-gray-300 mb-1">Signed Transaction:</p>
             <div className="bg-gray-900 p-2 rounded font-mono text-sm overflow-auto max-h-40">
-              <button className="bg-gray-200 text-black px-2 hover:bg-indigo-300" onClick={() => copyToClipboard(JSON.stringify(signedUserOp, null, 2))}>Copy</button>
-              <pre >{JSON.stringify(signedUserOp, null, 2)}</pre>
+              <CopyButton text={JSON.stringify(signedUserOp, null, 2) ?? ""} />
+              <pre>{JSON.stringify(signedUserOp, null, 2)}</pre>
             </div>
           </div>
           <div className="flex justify-center pt-2">
@@ -509,7 +643,6 @@ function TokenTransfer() {
         </div>
       </Modal>
 
-
       {/* Order History Modal */}
       <Modal
         isOpen={activeModal === "orderHistory"}
@@ -519,42 +652,58 @@ function TokenTransfer() {
         <div className="space-y-4 text-white">
           <div className="flex justify-between items-center">
             <p>Transaction Details:</p>
-            <button
-              onClick={refreshOrderHistory}
-              className="flex items-center gap-1 text-blue-400 hover:text-blue-300 px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 transition-colors"
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? <span>Refreshing...</span> : (<><RefreshIcon /> Refresh</>)}
-            </button>
           </div>
 
           {/* Order History Details */}
           {orderHistory ? (
             <div className="bg-gray-700 p-4 rounded-md">
-              <p><span className="font-semibold">Intent ID:</span> {orderHistory.intentId}</p>
-              <p><span className="font-semibold">Status:</span> {orderHistory.status}</p>
-              <p><span className="font-semibold">Transaction Hash:</span></p>
+              <p>
+                <span className="font-semibold">Intent ID:</span>{" "}
+                {orderHistory.intentId}
+              </p>
+              <p>
+                <span className="font-semibold">Status:</span>{" "}
+                {orderHistory.status}
+              </p>
+              <p>
+                <span className="font-semibold">Transaction Hash:</span>
+              </p>
               <pre className="break-all whitespace-pre-wrap overflow-auto bg-gray-800 p-2 rounded-md text-sm max-w-full">
-                <button className="bg-gray-200 text-black px-2 hover:bg-indigo-300" onClick={() => copyToClipboard(JSON.stringify(orderHistory.transactionHash[1]))}>Copy</button>
-                {orderHistory.transactionHash[1]}
+                <CopyButton
+                  text={orderHistory.downstreamTransactionHash[0] ?? ""}
+                />
+                {orderHistory.downstreamTransactionHash[0]}
               </pre>
             </div>
           ) : (
             <p className="text-gray-400">No order history available.</p>
           )}
 
-          {/* View in Explorer (if URL exists) */}
+          {/* GET order History */}
           {orderHistory && (
-            <div className="flex justify-center pt-2">
-              <a
-                href={`https://etherscan.io/tx/${orderHistory.transactionHash[0]}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors w-full text-center"
-              >
-                View in Explorer
-              </a>
-            </div>
+            <>
+              {orderHistory.status === "SUCCESSFUL" ? (
+                <div className="flex justify-center w-full pt-2">
+                  <ViewExplorerURL orderHistory={orderHistory} />
+                </div>
+              ) : (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={refreshOrderHistory}
+                    className="flex gap-x-3 justify-center items-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors w-full text-center"
+                    disabled={isRefreshing}
+                  >
+                    {isRefreshing ? (
+                      <span>Refreshing...</span>
+                    ) : (
+                      <>
+                        <RefreshIcon /> Refresh
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Reset Form Button */}
@@ -568,29 +717,33 @@ function TokenTransfer() {
           </div>
         </div>
       </Modal>
-
     </>
   );
 
   return (
-    <div className="w-full min-h-screen">
+    <div className="w-full bg-gray-900 min-h-screen">
       <div className="flex flex-col w-full max-w-2xl mx-auto p-6 space-y-6 bg-gray-900 rounded-lg shadow-xl justify-center items-center">
         <button
-          onClick={() => router.push("/")}
+          onClick={() => navigate.push("/")}
           className="w-fit py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black mb-8"
         >
           Home
         </button>
+        <h1 className="text-2xl font-bold text-white text-center">
+          Token Transfer
+        </h1>
         <p className="text-white font-regular text-lg mb-6">
-          For a detailed overview of Token Transfer intent, refer to our documentation on{" "}
+          For a detailed overview of Token Transfer intent, refer to our
+          documentation on{" "}
           <a
             className="underline text-indigo-300"
-            href="https://docsv2.okto.tech/docs/nextjs-sdk/tokenTransfer"
+            href="https://docs.okto.tech/docs/nextjs-sdk/tokenTransfer"
             target="_blank"
             rel="noopener noreferrer"
           >
             Token Transfer
-          </a>.
+          </a>
+          .
         </p>
 
         {error && (
@@ -606,4 +759,4 @@ function TokenTransfer() {
   );
 }
 
-export default TokenTransfer;
+export default TransferTokens;
