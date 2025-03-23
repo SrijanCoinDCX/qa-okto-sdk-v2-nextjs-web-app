@@ -32,6 +32,8 @@ COPY --chown=dcx:dcx --from=build /app/.next ./.next
 COPY --chown=dcx:dcx . .
 COPY --chown=dcx:dcx --from=build /app/package-lock.json ./package-lock.json
 
+RUN chmod +x /home/dcx/app/deployment/entrypoint.sh
+
 # only install production dependencies
 RUN npm ci --only=production
 
