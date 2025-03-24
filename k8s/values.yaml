@@ -1,4 +1,4 @@
-version: &imageVersion "13948409622"
+version: &imageVersion "14028125319"
 global:
   version: *imageVersion
 okto-sdkv2-nextjs-template-app:
