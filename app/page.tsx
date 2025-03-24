@@ -7,6 +7,7 @@ import {getAccount, getChains, getOrdersHistory, getPortfolio, getPortfolioActiv
 import Link from "next/link";
 import { ConfigContext } from "@/app/components/providers";
 import { STORAGE_KEY } from "./constants";
+import SignComponent from "./components/SignComponent";
 
 // Add type definitions
 interface Config {
@@ -34,16 +35,18 @@ export default function Home() {
     if (!idToken) {
       return { result: false, error: "No google login" };
     }
-    const user = await oktoClient.loginUsingOAuth({
-      idToken: idToken,
-      provider: 'google',
-    } ,  (session: any) => {
-      // Store the session info securely
-      console.log("session", session);
-      localStorage.setItem("okto_session_info", JSON.stringify(session));
-      setUserSWA(session.userSWA);
-    }
-  );
+    const user = await oktoClient.loginUsingOAuth(
+      {
+        idToken: idToken,
+        provider: "google",
+      },
+      (session: any) => {
+        // Store the session info securely
+        console.log("session", session);
+        localStorage.setItem("okto_session_info", JSON.stringify(session));
+        setUserSWA(session.userSWA);
+      }
+    );
     console.log("authenticated", user);
     return JSON.stringify(user);
   }
@@ -56,22 +59,22 @@ export default function Home() {
     } catch (error) {
       return { result: "logout failed" };
     }
-  } 
+  }
 
-  useEffect(()=>{
-    if(idToken){
+  useEffect(() => {
+    if (idToken) {
       handleAuthenticate();
     }
-  }, [idToken])
+  }, [idToken]);
 
   // Update the handleConfigUpdate function
   const handleConfigUpdate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     setConfig({
-      environment: (formData.get('environment') as string) || 'sandbox',
-      clientPrivateKey: (formData.get('clientPrivateKey') as string) || '',
-      clientSWA: (formData.get('clientSWA') as string) || '',
+      environment: (formData.get("environment") as string) || "sandbox",
+      clientPrivateKey: (formData.get("clientPrivateKey") as string) || "",
+      clientSWA: (formData.get("clientSWA") as string) || "",
     });
     setIsConfigOpen(false);
   };
@@ -79,15 +82,15 @@ export default function Home() {
   // Update the handleResetConfig function
   const handleResetConfig = () => {
     const defaultConfig = {
-      environment: process.env.NEXT_PUBLIC_ENVIRONMENT || 'sandbox',
-      clientPrivateKey: process.env.NEXT_PUBLIC_CLIENT_PRIVATE_KEY || '',
-      clientSWA: process.env.NEXT_PUBLIC_CLIENT_SWA || '',
+      environment: process.env.NEXT_PUBLIC_ENVIRONMENT || "sandbox",
+      clientPrivateKey: process.env.NEXT_PUBLIC_CLIENT_PRIVATE_KEY || "",
+      clientSWA: process.env.NEXT_PUBLIC_CLIENT_SWA || "",
     };
     setConfig(defaultConfig);
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-      console.error('Error removing config from localStorage:', error);
+      console.error("Error removing config from localStorage:", error);
     }
     setIsConfigOpen(false);
   };
@@ -96,7 +99,6 @@ export default function Home() {
     const session = localStorage.getItem("okto_session_info");
     const sessionInfo = JSON.parse(session || "{}");
     return { result: sessionInfo };
-    
   };
 
   return (
@@ -108,26 +110,36 @@ export default function Home() {
         onClick={() => setIsConfigOpen(!isConfigOpen)}
         className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
       >
-        {isConfigOpen ? 'Close Config' : 'Update Config'}
+        {isConfigOpen ? "Close Config" : "Update Config"}
       </button>
 
       {/* Current Config Display */}
       {!isConfigOpen && (
         <div className="w-full max-w-lg bg-white p-4 rounded-lg shadow-md">
-          <h3 className="font-medium text-gray-700 mb-2">Current Configuration:</h3>
+          <h3 className="font-medium text-gray-700 mb-2">
+            Current Configuration:
+          </h3>
           <div className="text-sm text-gray-600">
             <p>Environment: {config.environment}</p>
-            <p>Client Private Key: {config.clientPrivateKey ? '••••••••' : 'Not set'}</p>
-            <p>Client SWA: {config.clientSWA ? '••••••••' : 'Not set'}</p>
+            <p>
+              Client Private Key:{" "}
+              {config.clientPrivateKey ? "••••••••" : "Not set"}
+            </p>
+            <p>Client SWA: {config.clientSWA ? "••••••••" : "Not set"}</p>
           </div>
         </div>
       )}
 
       {/* Config Form */}
       {isConfigOpen && (
-        <form onSubmit={handleConfigUpdate} className="w-full max-w-lg bg-white p-6 rounded-lg shadow-md space-y-4">
+        <form
+          onSubmit={handleConfigUpdate}
+          className="w-full max-w-lg bg-white p-6 rounded-lg shadow-md space-y-4"
+        >
           <div>
-            <label className="block text-sm font-medium text-gray-700">Environment</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Environment
+            </label>
             <select
               name="environment"
               defaultValue={config.environment}
@@ -138,9 +150,11 @@ export default function Home() {
               {/* <option value="production">Production</option> */}
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">Client Private Key</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Client Private Key
+            </label>
             <input
               type="text"
               name="clientPrivateKey"
@@ -148,9 +162,11 @@ export default function Home() {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">Client SWA</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Client SWA
+            </label>
             <input
               type="text"
               name="clientSWA"
@@ -200,8 +216,12 @@ export default function Home() {
         <GetButton title="getTokens" apiFn={getTokens} />
       </div>
 
-      <Link 
-        href="/transfer" 
+      <div className="grid gap-4 w-full max-w-lg mt-8">
+        <SignComponent />
+      </div>
+
+      <Link
+        href="/transfer"
         className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
       >
         Go to Transfer Token Page
@@ -214,15 +234,15 @@ export default function Home() {
         Go to Create NFT Page
       </Link> */}
 
-      <Link 
-        href="/transfernft" 
+      <Link
+        href="/transfernft"
         className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
       >
         Go to Transfer NFT Page
       </Link>
 
-      <Link 
-        href="/evmrawtxn" 
+      <Link
+        href="/evmrawtxn"
         className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
       >
         Go to EVM Raw transaction

@@ -81,7 +81,7 @@ function TransferNFT() {
   const [userOp, setUserOp] = useState<any | null>(null);
   const [signedUserOp, setSignedUserOp] = useState<any | null>(null);
   const [orderHistory, setOrderHistory] = useState<any | null>(null);
-  const [explorerUrl, setExplorerUrl] = useState<string | null>(null);
+  const [sponsorshipEnabled, setSponsorshipEnabled] = useState(false);
 
   // Loading states
   const [loadingChains, setLoadingChains] = useState(true);
@@ -324,6 +324,17 @@ function TransferNFT() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // handle network change
+  const handleNetworkChange = (e: any) => {
+    const selectedCaipId = e.target.value;
+    setSelectedChain(selectedCaipId);
+
+    const selectedChainObj = chains.find(
+      (chain) => chain.caipId === selectedCaipId
+    );
+    setSponsorshipEnabled(selectedChainObj?.sponsorshipEnabled || false);
   };
 
   const handleNFTSelection = (e: any) => {
@@ -598,14 +609,7 @@ function TransferNFT() {
             <select
               className="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white"
               value={selectedChain}
-              onChange={(e) => {
-                setSelectedChain(e.target.value);
-                setSelectedNFT("");
-                setCollectionAddress("");
-                setNftId("");
-                setType("ERC721");
-                setAmount("1");
-              }}
+              onChange={handleNetworkChange}
               disabled={loadingChains}
             >
               <option value="" disabled>
@@ -618,6 +622,13 @@ function TransferNFT() {
               ))}
             </select>
           </div>
+          {selectedChain && (
+            <p className="mt-2 text-sm text-gray-300 border border-indigo-700 p-2 my-2">
+              {sponsorshipEnabled
+                ? "Gas sponsorship is available ✅"
+                : "⚠️ Sponsorship is not activated for this chain, the user must hold native tokens to proceed with the transfer. You can get the token from the respective faucets"}
+            </p>
+          )}
 
           {/* NFT Selection */}
           {selectedChain && (
