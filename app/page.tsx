@@ -248,7 +248,7 @@ export default function Home() {
         >
           Authenticate GAuth
         </button>
-        <LoginButton />
+        {/* <LoginButton /> */}
         {/* <GetButton title="Okto Authenticate" apiFn={handleAuthenticate} /> */}
         <GetButton title="Show Session Info" apiFn={getSessionInfo} />
         <GetButton title="Okto Log out" apiFn={handleLogout} />
