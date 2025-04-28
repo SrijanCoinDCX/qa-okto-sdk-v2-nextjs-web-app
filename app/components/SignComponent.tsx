@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useOkto, getAccount } from "@okto_web3/react-sdk";
-import { recoverMessageAddress } from "viem"; // Assuming you use viem or ethers for recovery
+import { recoverMessageAddress } from "viem";
 import CopyButton from "./CopyButton";
 
 interface SignComponentProps {}
