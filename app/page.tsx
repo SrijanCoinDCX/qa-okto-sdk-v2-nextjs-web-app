@@ -3,12 +3,13 @@ import React, { use, useEffect, useMemo, useContext, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { LoginButton } from "@/app/components/LoginButton";
 import GetButton from "@/app/components/GetButton";
-import { getAccount, getChains, getOrdersHistory, getPortfolio, getPortfolioActivity, getPortfolioNFT, getTokens, useOkto, useWebViewAuth } from '@okto_web3/react-sdk';
+import { getAccount, getChains, getOrdersHistory, getPortfolio, getPortfolioActivity, getPortfolioNFT, getTokens, useOkto, useOktoWebView } from '@okto_web3/react-sdk';
 import Link from "next/link";
 import { ConfigContext } from "@/app/components/providers";
 import { STORAGE_KEY } from "./constants";
 import SignComponent from "./components/SignComponent";
 import ModalWithOTP from "./components/EmailWhatsappAuth";
+import JWTAuthModal from "./components/JWTAuthentication";
 
 // Add type definitions
 interface Config {
@@ -28,6 +29,9 @@ export default function Home() {
   const { config, setConfig } = useContext<ConfigContextType>(ConfigContext);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [userSWA, setUserSWA] = useState("not signed in");
+
+  const [isJWTModalOpen, setIsJWTModalOpen] = useState(false);
+  const [jwtTokenInput, setJwtTokenInput] = useState("");
 
   //@ts-ignore
   const idToken = useMemo(() => (session ? session.id_token : null), [session]);
@@ -106,8 +110,6 @@ export default function Home() {
     console.log("Web-view triggered..");
     try {
       const result = await oktoClient.authenticateWithWebView({
-        width: 400,
-        height: 700,
         onClose: () => {
           console.log('WebView was closed');
         }
@@ -118,7 +120,7 @@ export default function Home() {
     }
   }
 
-  const { isModalOpen, authenticate } = useWebViewAuth();
+  const { isModalOpen, authenticate } = useOktoWebView();
 
   const handleAuthenticateWebView = async () => {
     try {
@@ -236,18 +238,14 @@ export default function Home() {
         setUserSWA={setUserSWA}
       />
       <div className="grid grid-cols-2 gap-4 w-full max-w-lg mt-8">
-        <button
-          onClick={handleAuthenticateWebView}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Onboarding WebView
-        </button>
-        <button
-          onClick={handleLoginUsingGoogle}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Authenticate GAuth
-        </button>
+        <GetButton title="Onboarding WebView" apiFn={handleAuthenticateWebView} checkLogin={false} />
+        <GetButton title="Authenticate GAuth" apiFn={handleLoginUsingGoogle} checkLogin={false} />
+        <GetButton title="Authenticate with JWT" apiFn={() => setIsJWTModalOpen(true)} checkLogin={false} />
+        <JWTAuthModal
+          isOpen={isJWTModalOpen}
+          onClose={() => setIsJWTModalOpen(false)}
+          setUserSWA={setUserSWA}
+        />
         {/* <LoginButton /> */}
         {/* <GetButton title="Okto Authenticate" apiFn={handleAuthenticate} /> */}
         <GetButton title="Show Session Info" apiFn={getSessionInfo} />

@@ -4,15 +4,16 @@ import { useOkto } from "@okto_web3/react-sdk";
 interface GetButtonProps {
   title: string;
   apiFn: any;
+  checkLogin?: boolean;
 }
 
-const GetButton: React.FC<GetButtonProps> = ({ title, apiFn }) => {
+const GetButton: React.FC<GetButtonProps> = ({ title, apiFn, checkLogin = true }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [resultData, setResultData] = useState("");
   const oktoClient = useOkto();
 
   const handleButtonClick = () => {
-    if (!oktoClient.isLoggedIn()) {
+    if (checkLogin && !oktoClient.isLoggedIn()) {
       console.log("Not logged in");
       setResultData(`error: Not logged in`); // Pretty print the JSON
       setModalVisible(true);
