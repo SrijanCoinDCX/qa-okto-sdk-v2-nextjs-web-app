@@ -74,6 +74,7 @@ function TransferNFT() {
   const [amount, setAmount] = useState<string>("1");
   const [type, setType] = useState<string>("ERC721");
   const [balance, setBalance] = useState<string>("");
+  const [feePayerAddress, setFeePayerAddress] = useState<string>("");
 
   // Modal and transaction states
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -269,7 +270,10 @@ function TransferNFT() {
 
     try {
       const transferParams = validateFormData();
-      const userOp = await nftTransferUserOp(oktoClient, transferParams);
+      if (!feePayerAddress.startsWith("0x") || feePayerAddress.length !== 42) {
+        throw new Error("Invalid fee payer address. It must be a valid 0x-prefixed Ethereum address.");
+      }
+      const userOp = await nftTransferUserOp(oktoClient, transferParams, feePayerAddress as `0x${string}`);
       setUserOp(userOp);
       showModal("unsignedOp");
       console.log("UserOp:", userOp);
@@ -419,6 +423,10 @@ function TransferNFT() {
               <li>
                 <span className="text-gray-400">Recipient:</span>{" "}
                 {recipientWalletAddress}
+              </li>
+              <li>
+                <span className="text-gray-400">Fee Payer:</span>{" "}
+                {feePayerAddress || "Default (User)"}
               </li>
               <li>
                 <span className="text-gray-400">Network:</span>{" "}
@@ -734,6 +742,19 @@ function TransferNFT() {
               <option value="ERC721">ERC721</option>
               <option value="ERC1155">ERC1155</option>
             </select>
+          </div>
+
+          {/* Fee Payer Address*/}
+          <div className="w-full mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Fee Payer Address (Optional)
+            </label>
+            <input
+              className="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              value={feePayerAddress}
+              onChange={(e) => setFeePayerAddress(e.target.value)}
+              placeholder="Enter Fee Payer Address (for sponsored transactions)"
+            />
           </div>
 
           {/* Transfer Buttons */}

@@ -84,6 +84,7 @@ function TransferTokens() {
     usdtBalance: string;
     inrBalance: string;
   } | null>(null);
+  const [feePayerAddress, setFeePayerAddress] = useState<`0x${string}` | undefined>(undefined);
 
   // Transaction state
   const [jobId, setJobId] = useState<string | null>(null);
@@ -317,7 +318,7 @@ function TransferTokens() {
       const transferParams = validateFormData();
       // Note overher: you can directly import tokenTransfer from the @okto_web3/react-sdk
       // On doing so, you'll directly get the jobId and you won't have to follow the below code.
-      const userOp = await tokenTransfer(oktoClient, transferParams);
+      const userOp = await tokenTransfer(oktoClient, transferParams, feePayerAddress);
       const signedOp = await oktoClient.signUserOp(userOp);
       const jobId = await oktoClient.executeUserOp(signedOp);
 
@@ -340,7 +341,7 @@ function TransferTokens() {
 
     try {
       const transferParams = validateFormData();
-      const userOp = await tokenTransfer(oktoClient, transferParams);
+      const userOp = await tokenTransfer(oktoClient, transferParams, feePayerAddress);
       setUserOp(userOp);
       showModal("unsignedOp");
       console.log("UserOp:", userOp);
@@ -444,10 +445,10 @@ function TransferTokens() {
             {loadingTokens
               ? "Loading tokens..."
               : !selectedChain
-              ? "Select a network first"
-              : tokens.length === 0
-              ? "No tokens available"
-              : "Select a token"}
+                ? "Select a network first"
+                : tokens.length === 0
+                  ? "No tokens available"
+                  : "Select a token"}
           </option>
           {tokens.map((token) => (
             <option
@@ -469,12 +470,12 @@ function TransferTokens() {
               <>
                 Balance:{" "}
                 {selectedToken &&
-                portfolioBalance?.find((pb) => pb.symbol === selectedToken)
-                  ?.balance !== undefined
+                  portfolioBalance?.find((pb) => pb.symbol === selectedToken)
+                    ?.balance !== undefined
                   ? Number(
-                      portfolioBalance.find((pb) => pb.symbol === selectedToken)
-                        ?.balance
-                    ).toFixed(4)
+                    portfolioBalance.find((pb) => pb.symbol === selectedToken)
+                      ?.balance
+                  ).toFixed(4)
                   : "0"}{" "}
                 &nbsp; INR:{" "}
                 {(selectedToken &&
@@ -501,8 +502,7 @@ function TransferTokens() {
         <small className="text-gray-400">
           {selectedToken &&
             tokens.find((t) => t.symbol === selectedToken)?.decimals &&
-            `This token has ${
-              tokens.find((t) => t.symbol === selectedToken)?.decimals
+            `This token has ${tokens.find((t) => t.symbol === selectedToken)?.decimals
             } decimals`}
         </small>
       </div>
@@ -518,6 +518,28 @@ function TransferTokens() {
           value={recipient}
           onChange={(e) => setRecipient(e.target.value)}
           placeholder="0x..."
+          disabled={isLoading}
+        />
+      </div>
+
+      {/* Fee Payer Address */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Fee Payer Address (Optional)
+        </label>
+        <input
+          type="text"
+          className="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white"
+          value={feePayerAddress}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value.startsWith("0x")) {
+              setFeePayerAddress(value as `0x${string}`);
+            } else {
+              setFeePayerAddress(undefined);
+            }
+          }}
+          placeholder="Enter fee payer address for sponsored transactions"
           disabled={isLoading}
         />
       </div>
@@ -608,6 +630,10 @@ function TransferTokens() {
               </li>
               <li>
                 <span className="text-gray-400">Recipient:</span> {recipient}
+              </li>
+              <li>
+                <span className="text-gray-400">Fee Payer:</span>{" "}
+                {feePayerAddress || "Default (User)"}
               </li>
               <li>
                 <span className="text-gray-400">Network:</span>{" "}
