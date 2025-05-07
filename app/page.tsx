@@ -67,10 +67,23 @@ export default function Home() {
   }
 
   useEffect(() => {
+    const session = localStorage.getItem("okto_session");
+    if (session) {
+      try {
+        const parsedSession = JSON.parse(session);
+        if (parsedSession?.userSWA) {
+          setUserSWA(parsedSession.userSWA);
+        }
+      } catch (e) {
+        console.error("Failed to parse session from localStorage", e);
+      }
+    }
+
     if (idToken) {
       handleAuthenticate();
     }
   }, [idToken]);
+
 
   // Update the handleConfigUpdate function
   const handleConfigUpdate = (e: React.FormEvent<HTMLFormElement>) => {
@@ -110,8 +123,18 @@ export default function Home() {
     console.log("Web-view triggered..");
     try {
       const result = await oktoClient.authenticateWithWebView({
+        onSuccess: (response: any) => {
+          console.log("WebView response:", response);
+          if (response != undefined && response != null) {
+            const { userSWA } = response;
+            setUserSWA(userSWA);
+          }
+        },
+        onError: (error: any) => {
+          console.error('WebView error: ', error);
+        },
         onClose: () => {
-          console.log('WebView was closed');
+          console.log('WebView closed');
         }
       });
       console.log('Authentication result:', result);
@@ -123,12 +146,23 @@ export default function Home() {
   const { isModalOpen, authenticate } = useOktoWebView();
 
   const handleAuthenticateWebView = async () => {
-    try {
-      const result = await authenticate();
-      console.log('Authentication successful:', result);
-    } catch (error) {
-      console.error('Authentication failed:', error);
-    }
+    const result = await authenticate(
+      {
+        onSuccess: (response: any) => {
+          console.log("WebView response:", response);
+          if (response != undefined && response != null) {
+            const { userSWA } = response;
+            setUserSWA(userSWA);
+          }
+        },
+        onError: (error: any) => {
+          console.error('WebView error: ', error);
+        },
+        onClose: () => {
+          console.log('WebView closed');
+        }
+      }
+    );
   };
 
   async function handleLoginUsingGoogle() {
@@ -238,7 +272,11 @@ export default function Home() {
         setUserSWA={setUserSWA}
       />
       <div className="grid grid-cols-2 gap-4 w-full max-w-lg mt-8">
-        <GetButton title="Onboarding WebView" apiFn={handleAuthenticateWebView} checkLogin={false} />
+        <button
+          title="Onboarding WebView"
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          onClick={handleAuthenticateWebView}
+        > Onboarding Webview</button>
         <GetButton title="Authenticate GAuth" apiFn={handleLoginUsingGoogle} checkLogin={false} />
         <GetButton title="Authenticate with JWT" apiFn={() => setIsJWTModalOpen(true)} checkLogin={false} />
         <JWTAuthModal
