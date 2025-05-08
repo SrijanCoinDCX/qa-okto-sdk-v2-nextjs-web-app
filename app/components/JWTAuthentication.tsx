@@ -6,9 +6,10 @@ interface JWTAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   setUserSWA: (swa: string) => void;
+  setIsAuthenticated: (value: boolean) => void;
 }
 
-export default function JWTAuthModal({ isOpen, onClose, setUserSWA }: JWTAuthModalProps) {
+export default function JWTAuthModal({ isOpen, onClose, setUserSWA, setIsAuthenticated }: JWTAuthModalProps) {
   const [jwtToken, setJwtToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -22,6 +23,7 @@ export default function JWTAuthModal({ isOpen, onClose, setUserSWA }: JWTAuthMod
         console.log("Session established:", session);
         localStorage.setItem("okto_session_info", JSON.stringify(session));
         setUserSWA(session.userSWA);
+        setIsAuthenticated(true);
       });
       console.log("Authentication result:", result);
       onClose();

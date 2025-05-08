@@ -10,6 +10,7 @@ import { STORAGE_KEY } from "./constants";
 import SignComponent from "./components/SignComponent";
 import ModalWithOTP from "./components/EmailWhatsappAuth";
 import JWTAuthModal from "./components/JWTAuthentication";
+import AuthenticationButtons from "./components/AuthenticationButtons";
 
 // Add type definitions
 interface Config {
@@ -29,6 +30,7 @@ export default function Home() {
   const { config, setConfig } = useContext<ConfigContextType>(ConfigContext);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [userSWA, setUserSWA] = useState("not signed in");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const [isJWTModalOpen, setIsJWTModalOpen] = useState(false);
   const [jwtTokenInput, setJwtTokenInput] = useState("");
@@ -53,6 +55,7 @@ export default function Home() {
       }
     );
     console.log("authenticated", user);
+    setIsAuthenticated(true);
     return JSON.stringify(user);
   }
 
@@ -60,6 +63,7 @@ export default function Home() {
     try {
       oktoClient.sessionClear();
       signOut();
+      setIsAuthenticated(false);
       return { result: "logout success" };
     } catch (error) {
       return { result: "logout failed" };
@@ -73,6 +77,7 @@ export default function Home() {
         const parsedSession = JSON.parse(session);
         if (parsedSession?.userSWA) {
           setUserSWA(parsedSession.userSWA);
+          setIsAuthenticated(true);
         }
       } catch (e) {
         console.error("Failed to parse session from localStorage", e);
@@ -128,6 +133,7 @@ export default function Home() {
           if (response != undefined && response != null) {
             const { userSWA } = response;
             setUserSWA(userSWA);
+            setIsAuthenticated(true);
           }
         },
         onError: (error: any) => {
@@ -153,6 +159,7 @@ export default function Home() {
           if (response != undefined && response != null) {
             const { userSWA } = response;
             setUserSWA(userSWA);
+            setIsAuthenticated(true);
           }
         },
         onError: (error: any) => {
@@ -168,6 +175,11 @@ export default function Home() {
   async function handleLoginUsingGoogle() {
     const result = oktoClient.loginUsingSocial('google');
     console.log("Google login result:", result);
+    if (typeof result === "string" && /^0x[a-fA-F0-9]+$/.test(result)) {
+      const { userSWA } = result;
+      setUserSWA(userSWA);
+      setIsAuthenticated(true);
+    }
   }
 
   return (
@@ -268,26 +280,37 @@ export default function Home() {
           <p>{`ClientSWA: ${config.clientSWA}`}</p>
         </div>
       </div>
-      <ModalWithOTP
+      <div className="w-full max-w-lg rounded-lg flex items-center space-x-4">
+        <h1 className="text-lg font-bold">Authentication</h1>
+        <div
+          className={` py-1 px-4 rounded-full text-sm text-white ${
+        isAuthenticated ? "bg-green-500" : "bg-red-500"
+          }`}
+          title={isAuthenticated ? "Active" : "Inactive"}
+        >{isAuthenticated ? "User Active" : "User not Active"}</div>
+      </div>
+      <AuthenticationButtons
         setUserSWA={setUserSWA}
+        handleAuthenticateWebView={handleAuthenticateWebView}
+        handleLoginUsingGoogle={handleLoginUsingGoogle}
+        setIsJWTModalOpen={setIsJWTModalOpen}
+        isJWTModalOpen={isJWTModalOpen}
+        handleLogout={handleLogout}
+        isAuthenticated={isAuthenticated}
       />
+      <JWTAuthModal
+        isOpen={isJWTModalOpen}
+        onClose={() => setIsJWTModalOpen(false)}
+        setUserSWA={setUserSWA}
+        setIsAuthenticated={setIsAuthenticated}
+      />
+      <div className="w-full max-w-lg rounded-lg">
+        <h1 className="text-lg font-bold">BFF Calls</h1>
+      </div>
       <div className="grid grid-cols-2 gap-4 w-full max-w-lg mt-8">
-        <button
-          title="Onboarding WebView"
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-          onClick={handleAuthenticateWebView}
-        > Onboarding Webview</button>
-        <GetButton title="Authenticate GAuth" apiFn={handleLoginUsingGoogle} checkLogin={false} />
-        <GetButton title="Authenticate with JWT" apiFn={() => setIsJWTModalOpen(true)} checkLogin={false} />
-        <JWTAuthModal
-          isOpen={isJWTModalOpen}
-          onClose={() => setIsJWTModalOpen(false)}
-          setUserSWA={setUserSWA}
-        />
         {/* <LoginButton /> */}
         {/* <GetButton title="Okto Authenticate" apiFn={handleAuthenticate} /> */}
         <GetButton title="Show Session Info" apiFn={getSessionInfo} />
-        <GetButton title="Okto Log out" apiFn={handleLogout} />
         <GetButton title="getAccount" apiFn={getAccount} />
         <GetButton title="getChains" apiFn={getChains} />
         <GetButton title="getOrdersHistory" apiFn={getOrdersHistory} />
@@ -301,39 +324,54 @@ export default function Home() {
         <SignComponent />
       </div>
 
-      <Link
-        href="/transfer"
-        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-      >
-        Go to Transfer Token Page
-      </Link>
+      <div className="w-full max-w-lg rounded-lg">
+        <h1 className="text-lg font-bold">User Operations</h1>
+      </div>
 
-      {/* <Link 
-        href="/createnft" 
-        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-      >
-        Go to Create NFT Page
-      </Link> */}
+      <div className="w-full max-w-lg bg-white p-4 rounded-lg shadow-md flex flex-row space-x-2">
+        <Link
+          href="/transfer"
+          className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
+        >
+          Transfer Token
+        </Link>
+        <div className="w-px bg-gray-300 mx-4"></div>
+        <Link
+          href="/createnft"
+          className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
+        >
+          NFT Collection Creation
+        </Link>
+        <div className="w-px bg-gray-300 mx-4"></div>
+        <Link
+          href="/transfernft"
+          className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
+        >
+          NFT Transfer
+        </Link>
+        <div className="w-px bg-gray-300 mx-4"></div>
+        <Link
+          href="/nftmint"
+          className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
+        >
+          NFT Mint
+        </Link>
+      </div>
 
-      <Link
-        href="/transfernft"
-        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-      >
-        Go to Transfer NFT Page
-      </Link>
-
-      <Link
-        href="/evmrawtxn"
-        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-      >
-        Go to EVM Raw transaction
-      </Link>
-      {/* <Link
-        href="/aptosrawtxn"
-        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-      >
-        Go to APTOS Raw transaction
-      </Link> */}
+      <div className="flex flex-row space-x-2 w-full max-w-lg mt-8">
+        <Link
+          href="/evmrawtxn"
+          className="flex-1 h-24 w-58 px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-center flex items-center justify-center"
+        >
+          EVM Raw transaction
+        </Link>
+        <Link
+          href="/aptosrawtxn"
+          className="flex-1 h-24 w-58 px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-center flex items-center justify-center"
+        >
+          APTOS Raw transaction
+        </Link>
+      </div>
     </main>
   );
 }

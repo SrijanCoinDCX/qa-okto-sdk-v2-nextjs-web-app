@@ -72,9 +72,9 @@ export default function ModalWithOTP({ setUserSWA }: { setUserSWA: (swa: string)
             {/* Button to open modal */}
             <button
                 onClick={() => setIsModalOpen(true)}
-                className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-                Open OTP Modal
+                Authenticate via Email/WhatsApp
             </button>
 
             {/* Modal */}

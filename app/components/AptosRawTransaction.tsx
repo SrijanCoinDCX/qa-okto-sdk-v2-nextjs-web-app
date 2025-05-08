@@ -70,6 +70,7 @@ function AptosRawTransaction() {
     const [signedUserOp, setSignedUserOp] = useState<any | null>(null);
     const [orderHistory, setOrderHistory] = useState<any | null>(null);
     const [activeModal, setActiveModal] = useState<string | null>(null);
+    const [feePayerAddress, setFeePayerAddress] = useState<`0x${string}` | undefined>(undefined);
 
     const showModal = (modal: string) => setActiveModal(modal);
     const closeAllModals = () => setActiveModal(null);
@@ -160,18 +161,17 @@ function AptosRawTransaction() {
         setError(null);
 
         try {
-            const transactionParams = {
+            const rawTransactionIntentParams = {
                 caip2Id: selectedChain,
-                transactions: [{
-                    function: functionName,
-                    typeArguments: typeArguments.split(",").filter(Boolean),
-                    functionArguments: functionArguments.split(",").filter(Boolean),
-                }]
+                function: functionName,
+                typeArguments: typeArguments.split(",").filter(Boolean),
+                functionArguments: functionArguments.split(",").filter(Boolean),
             };
 
             const createdUserOp = await aptosRawTransaction(
                 oktoClient,
-                transactionParams
+                rawTransactionIntentParams,
+                feePayerAddress
             );
             setUserOp(createdUserOp);
             showModal("unsignedOp");
@@ -263,6 +263,14 @@ function AptosRawTransaction() {
                             <CopyButton text={JSON.stringify(userOp, null, 2) ?? ""} />
                             <pre>{JSON.stringify(userOp, null, 2)}</pre>
                         </div>
+                        {feePayerAddress && (
+                            <>
+                                <br />
+                                <p className="text-sm text-gray-300 mb-1">
+                                    <span>Fee Payer:</span> {feePayerAddress}
+                                </p>
+                            </>
+                        )}
                     </div>
                     <div className="flex justify-center pt-2">
                         <button
@@ -467,6 +475,26 @@ function AptosRawTransaction() {
                             value={functionArguments}
                             onChange={(e) => setFunctionArguments(e.target.value)}
                             placeholder="arg1, arg2"
+                        />
+                    </div>
+
+                    {/* Fee Payer Address */}
+                    <div className="w-full my-2">
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                            Fee Payer Address (Optional)
+                        </label>
+                        <input
+                            className="w-full p-3 mb-4 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                            value={feePayerAddress}
+                            onChange={(e: { target: { value: any; }; }) => {
+                                const value = e.target.value;
+                                if (value.startsWith("0x")) {
+                                    setFeePayerAddress(value as `0x${string}`);
+                                } else {
+                                    setFeePayerAddress(undefined);
+                                }
+                            }}
+                            placeholder="Enter fee payer address for sponsored transactions"
                         />
                     </div>
 
