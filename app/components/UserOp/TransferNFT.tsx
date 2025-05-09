@@ -13,7 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { nftTransfer as nftTransferUserOp } from "@okto_web3/react-sdk/userop";
 import { nftTransfer as nftTransferMain } from "@okto_web3/react-sdk";
-import CopyButton from "../components/CopyButton";
+import CopyButton from "../CopyButton";
 
 // Modal Component
 interface ModalProps {

@@ -1,6 +1,7 @@
 "use client";
 
-import NFTMint from "../components/NFTMint";
+import NFTMint from "@/app/components/UserOp/NFTMint";
+
 
 export default function NFTMintPage() {
     return (

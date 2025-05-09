@@ -1,6 +1,6 @@
 "use client";
 
-import AptosRawTransaction from "../components/AptosRawTransaction";
+import AptosRawTransaction from "@/app/components/UserOp/AptosRawTransaction";
 
 export default function AptosRawTransactionPage() {
   return (

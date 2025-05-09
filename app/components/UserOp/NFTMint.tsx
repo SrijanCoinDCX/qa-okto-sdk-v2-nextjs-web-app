@@ -11,7 +11,7 @@ import {
 } from "@okto_web3/react-sdk";
 import { useRouter } from "next/navigation";
 import { nftMint } from "@okto_web3/react-sdk/userop";
-import CopyButton from "../components/CopyButton";
+import CopyButton from "../CopyButton";
 
 interface ModalProps {
   isOpen: boolean;

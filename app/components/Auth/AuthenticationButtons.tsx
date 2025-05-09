@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ModalWithOTP from "./EmailWhatsappAuth";
-import JWTAuthModal from "./JWTAuthentication";
-import GetButton from "./GetButton";
+import GetButton from "../GetButton";
 
 interface AuthenticationButtonsProps {
     setUserSWA: (value: string) => void;
