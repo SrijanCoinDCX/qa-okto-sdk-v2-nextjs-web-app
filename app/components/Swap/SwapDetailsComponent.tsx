@@ -46,7 +46,7 @@ export default function SwapDetailsComponent({
 }: SwapDetailsProps) {
     if (!details) return null;
 
-    const formattedFromAmount = formatDisplayAmount(fromAmount, fromToken);
+    const formattedFromAmount = fromAmount;
     const formattedToAmount = formatDisplayAmount(formattedOutputAmount, toToken);
 
     const formatFeeAmount = (feeAmount: string) => {
