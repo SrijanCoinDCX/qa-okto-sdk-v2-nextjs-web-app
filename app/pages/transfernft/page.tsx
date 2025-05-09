@@ -1,6 +1,8 @@
 "use client";
 
-import TransferNFT from "../components/TransferNFT";
+import TransferNFT from "@/app/components/UserOp/TransferNFT";
+
+
 
 export default function TransferNFTPage() {
   return (

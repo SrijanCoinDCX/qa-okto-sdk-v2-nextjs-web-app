@@ -14,8 +14,8 @@ import {
 import { tokenTransfer } from "@okto_web3/react-sdk/userop";
 import { getChains } from "@okto_web3/react-sdk";
 import { useRouter } from "next/navigation";
-import CopyButton from "../components/CopyButton";
-import ViewExplorerURL from "../components/ViewExplorerURL";
+import CopyButton from "../CopyButton";
+import ViewExplorerURL from "../ViewExplorerURL";
 
 // Types
 interface TokenOption {

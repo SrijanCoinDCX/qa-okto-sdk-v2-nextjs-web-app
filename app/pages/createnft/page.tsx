@@ -1,6 +1,7 @@
 "use client";
 
-import CreateNFT from "../components/CreateNFT";
+import CreateNFT from "@/app/components/UserOp/CreateNFT";
+
 
 export default function CreateNFTPage() {
   return (

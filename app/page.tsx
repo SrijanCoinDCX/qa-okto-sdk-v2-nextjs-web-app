@@ -1,16 +1,17 @@
 "use client";
 import React, { use, useEffect, useMemo, useContext, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { LoginButton } from "@/app/components/LoginButton";
+import { LoginButton } from "@/app/components/Auth/LoginButton";
 import GetButton from "@/app/components/GetButton";
 import { getAccount, getChains, getOrdersHistory, getPortfolio, getPortfolioActivity, getPortfolioNFT, getTokens, useOkto, useOktoWebView } from '@okto_web3/react-sdk';
 import Link from "next/link";
 import { ConfigContext } from "@/app/components/providers";
 import { STORAGE_KEY } from "./constants";
 import SignComponent from "./components/SignComponent";
-import ModalWithOTP from "./components/EmailWhatsappAuth";
-import JWTAuthModal from "./components/JWTAuthentication";
-import AuthenticationButtons from "./components/AuthenticationButtons";
+import ModalWithOTP from "./components/Auth/EmailWhatsappAuth";
+import JWTAuthModal from "./components/Auth/JWTAuthentication";
+import AuthenticationButtons from "./components/Auth/AuthenticationButtons";
+
 
 // Add type definitions
 interface Config {
@@ -283,9 +284,8 @@ export default function Home() {
       <div className="w-full max-w-lg rounded-lg flex items-center space-x-4">
         <h1 className="text-lg font-bold">Authentication</h1>
         <div
-          className={` py-1 px-4 rounded-full text-sm text-white ${
-        isAuthenticated ? "bg-green-500" : "bg-red-500"
-          }`}
+          className={` py-1 px-4 rounded-full text-sm text-white ${isAuthenticated ? "bg-green-500" : "bg-red-500"
+            }`}
           title={isAuthenticated ? "Active" : "Inactive"}
         >{isAuthenticated ? "User Active" : "User not Active"}</div>
       </div>
@@ -330,28 +330,28 @@ export default function Home() {
 
       <div className="w-full max-w-lg bg-white p-4 rounded-lg shadow-md flex flex-row space-x-2">
         <Link
-          href="/transfer"
+          href="/pages/transfer"
           className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
         >
           Transfer Token
         </Link>
         <div className="w-px bg-gray-300 mx-4"></div>
         <Link
-          href="/createnft"
+          href="/pages/createnft"
           className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
         >
           NFT Collection Creation
         </Link>
         <div className="w-px bg-gray-300 mx-4"></div>
         <Link
-          href="/transfernft"
+          href="/pages/transfernft"
           className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
         >
           NFT Transfer
         </Link>
         <div className="w-px bg-gray-300 mx-4"></div>
         <Link
-          href="/nftmint"
+          href="/pages/nftmint"
           className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
         >
           NFT Mint
@@ -360,16 +360,24 @@ export default function Home() {
 
       <div className="flex flex-row space-x-2 w-full max-w-lg mt-8">
         <Link
-          href="/evmrawtxn"
+          href="/pages/evmrawtxn"
           className="flex-1 h-24 w-58 px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-center flex items-center justify-center"
         >
           EVM Raw transaction
         </Link>
         <Link
-          href="/aptosrawtxn"
+          href="/pages/aptosrawtxn"
           className="flex-1 h-24 w-58 px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-center flex items-center justify-center"
         >
           APTOS Raw transaction
+        </Link>
+      </div>
+      <div className="flex flex-row space-x-2 w-full max-w-lg mt-8">
+        <Link
+          href="/pages/swap"
+          className="w-full h-24 px-8 py-3 bg-gradient-to-r from-purple-300 via-blue-500 to-purple-600 text-white rounded-lg hover:from-purple-500 hover:via-blue-600 hover:to-purple-700 transition-all text-center flex items-center justify-center shadow-lg transform hover:scale-102"
+        >
+          Swap Tokens
         </Link>
       </div>
     </main>

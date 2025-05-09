@@ -12,8 +12,9 @@ import {
 } from "@okto_web3/react-sdk";
 import { evmRawTransaction as evmRawTransactionUserop } from "@okto_web3/react-sdk/userop";
 import { useRouter } from "next/navigation";
-import CopyButton from "../components/CopyButton";
-import ViewExplorerURL from "../components/ViewExplorerURL";
+import CopyButton from "../CopyButton";
+import ViewExplorerURL from "../ViewExplorerURL";
+
 
 interface ModalProps {
   isOpen: boolean;
