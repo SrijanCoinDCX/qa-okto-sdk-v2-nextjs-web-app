@@ -175,11 +175,10 @@ export default function Home() {
   };
 
   async function handleLoginUsingGoogle() {
-    const result = oktoClient.loginUsingSocial('google');
+    const result = await oktoClient.loginUsingSocial('google');
     console.log("Google login result:", result);
-    if (typeof result === "string" && /^0x[a-fA-F0-9]+$/.test(result)) {
-      const { userSWA } = result;
-      setUserSWA(userSWA);
+    if (typeof result === "string" && result) {
+      setUserSWA(result);
       setIsAuthenticated(true);
     }
   }
