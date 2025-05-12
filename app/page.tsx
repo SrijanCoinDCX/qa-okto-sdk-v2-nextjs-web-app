@@ -158,11 +158,11 @@ export default function Home() {
       {
         onSuccess: (response: any) => {
           console.log("WebView response:", response);
-          if (response != undefined && response != null) {
-            const { userSWA } = response;
-            setUserSWA(userSWA);
-            setIsAuthenticated(true);
-          }
+
+          const { userSWA } = response;
+          setUserSWA(userSWA);
+          setIsAuthenticated(true);
+
         },
         onError: (error: any) => {
           console.error('WebView error: ', error);
