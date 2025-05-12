@@ -11,6 +11,7 @@ import SignComponent from "./components/SignComponent";
 import ModalWithOTP from "./components/Auth/EmailWhatsappAuth";
 import JWTAuthModal from "./components/Auth/JWTAuthentication";
 import AuthenticationButtons from "./components/Auth/AuthenticationButtons";
+import OrderHistoryButton from "./components/Swap/OrderHistoryComponent";
 
 
 // Add type definitions
@@ -322,6 +323,7 @@ export default function Home() {
 
       <div className="grid gap-4 w-full max-w-lg mt-8">
         <SignComponent />
+        <OrderHistoryButton />
       </div>
 
       <div className="w-full max-w-lg rounded-lg">
