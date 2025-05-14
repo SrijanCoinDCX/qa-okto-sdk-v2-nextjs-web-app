@@ -4,6 +4,7 @@ import GetButton from "../GetButton";
 
 interface AuthenticationButtonsProps {
     setUserSWA: (value: string) => void;
+    setIsAuthenticated: (value: boolean) => void;
     handleAuthenticateWebView: () => void;
     handleLoginUsingGoogle: () => void;
     setIsJWTModalOpen: (value: boolean) => void;
@@ -14,6 +15,7 @@ interface AuthenticationButtonsProps {
 
 const AuthenticationButtons: React.FC<AuthenticationButtonsProps> = ({
     setUserSWA,
+    setIsAuthenticated,
     handleAuthenticateWebView,
     handleLoginUsingGoogle,
     setIsJWTModalOpen,
@@ -26,7 +28,7 @@ const AuthenticationButtons: React.FC<AuthenticationButtonsProps> = ({
         <div className="grid grid-cols-2 gap-4 w-full max-w-lg mt-8">
             {!isAuthenticated && (
                 <>
-                    <ModalWithOTP setUserSWA={setUserSWA} />
+                    <ModalWithOTP setUserSWA={setUserSWA} setIsAuthenticated={setIsAuthenticated} />
                     <button
                         title="Onboarding WebView"
                         className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"

@@ -296,8 +296,7 @@ export default function Home() {
         setIsJWTModalOpen={setIsJWTModalOpen}
         isJWTModalOpen={isJWTModalOpen}
         handleLogout={handleLogout}
-        isAuthenticated={isAuthenticated}
-      />
+        isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
       <JWTAuthModal
         isOpen={isJWTModalOpen}
         onClose={() => setIsJWTModalOpen(false)}
