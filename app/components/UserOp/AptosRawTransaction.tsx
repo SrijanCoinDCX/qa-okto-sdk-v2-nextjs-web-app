@@ -161,11 +161,16 @@ function AptosRawTransaction() {
         setError(null);
 
         try {
+            // Fixed data structure to match validation schema
             const rawTransactionIntentParams = {
                 caip2Id: selectedChain,
-                function: functionName,
-                typeArguments: typeArguments.split(",").filter(Boolean),
-                functionArguments: functionArguments.split(",").filter(Boolean),
+                transactions: [
+                    {
+                        function: functionName,
+                        typeArguments: typeArguments.split(",").filter(Boolean),
+                        functionArguments: functionArguments.split(",").filter(Boolean),
+                    },
+                ],
             };
 
             const createdUserOp = await aptosRawTransaction(
