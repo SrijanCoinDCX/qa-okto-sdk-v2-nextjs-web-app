@@ -10,18 +10,20 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@okto_web3/react-sdk": "^0.5.2-dev.35",
+    "@okto_web3/react-sdk": "^0.5.3-dev.1",
     "axios": "^1.7.2",
     "lucide-react": "^0.483.0",
     "next": "14.2.10",
     "next-auth": "^4.24.7",
     "react": "^18",
+    "react-color": "^2.19.3",
     "react-dom": "^18",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
+    "@types/react-color": "^3.0.13",
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.10",

@@ -1,9 +1,9 @@
 "use client";
-import React, { use, useEffect, useMemo, useContext, useState } from "react";
+import React, { use, useEffect, useMemo, useContext, useState, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { LoginButton } from "@/app/components/Auth/LoginButton";
 import GetButton from "@/app/components/GetButton";
-import { getAccount, getChains, getOrdersHistory, getPortfolio, getPortfolioActivity, getPortfolioNFT, getTokens, useOkto, useOktoWebView } from '@okto_web3/react-sdk';
+import { AppearanceOptions, getAccount, getChains, getOrdersHistory, getPortfolio, getPortfolioActivity, getPortfolioNFT, getTokens, useOkto, useOktoWebView } from '@okto_web3/react-sdk';
 import Link from "next/link";
 import { ConfigContext } from "@/app/components/providers";
 import { STORAGE_KEY } from "./constants";
@@ -12,6 +12,7 @@ import ModalWithOTP from "./components/Auth/EmailWhatsappAuth";
 import JWTAuthModal from "./components/Auth/JWTAuthentication";
 import AuthenticationButtons from "./components/Auth/AuthenticationButtons";
 import OrderHistoryButton from "./components/Swap/OrderHistoryComponent";
+import OnboardingConfigurator, { defaultAppearanceOptions } from "./components/OnboardingConfigSetter";
 
 
 // Add type definitions
@@ -33,6 +34,12 @@ export default function Home() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [userSWA, setUserSWA] = useState("not signed in");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [onboardingThemeConfig, setOnboardingThemeConfig] = useState<AppearanceOptions>(() => {
+    // Load from localStorage
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('okto-onboarding-config') : null;
+    return saved ? JSON.parse(saved) : defaultAppearanceOptions;
+  });
+
 
   const [isJWTModalOpen, setIsJWTModalOpen] = useState(false);
   const [jwtTokenInput, setJwtTokenInput] = useState("");
@@ -40,7 +47,7 @@ export default function Home() {
   //@ts-ignore
   const idToken = useMemo(() => (session ? session.id_token : null), [session]);
 
-  async function handleAuthenticate(): Promise<any> {
+  const handleAuthenticate = useCallback(async (): Promise<any> => {
     if (!idToken) {
       return { result: false, error: "No google login" };
     }
@@ -59,7 +66,7 @@ export default function Home() {
     console.log("authenticated", user);
     setIsAuthenticated(true);
     return JSON.stringify(user);
-  }
+  }, [idToken, oktoClient]);
 
   async function handleLogout() {
     try {
@@ -85,11 +92,12 @@ export default function Home() {
         console.error("Failed to parse session from localStorage", e);
       }
     }
+    localStorage.setItem('okto-onboarding-config', JSON.stringify(onboardingThemeConfig));
 
     if (idToken) {
       handleAuthenticate();
     }
-  }, [idToken]);
+  }, [handleAuthenticate, idToken, onboardingThemeConfig]);
 
 
   // Update the handleConfigUpdate function
@@ -129,6 +137,9 @@ export default function Home() {
   async function handleWebViewAuthentication() {
     console.log("Web-view triggered..");
     try {
+      // Use the latest state directly instead of relying on closure value
+      const currentConfig = { ...onboardingThemeConfig };
+      console.log("WebView config:", currentConfig);
       const result = await oktoClient.authenticateWithWebView({
         onSuccess: (response: any) => {
           console.log("WebView response:", response);
@@ -144,7 +155,8 @@ export default function Home() {
         onClose: () => {
           console.log('WebView closed');
         }
-      });
+      }, currentConfig
+      );
       console.log('Authentication result:', result);
     } catch (error) {
       console.error('Authentication failed:', error);
@@ -289,14 +301,23 @@ export default function Home() {
           title={isAuthenticated ? "Active" : "Inactive"}
         >{isAuthenticated ? "User Active" : "User not Active"}</div>
       </div>
+
+      {!isAuthenticated && (
+        <OnboardingConfigurator
+          themeConfig={onboardingThemeConfig}
+          setThemeConfig={setOnboardingThemeConfig}
+        />
+      )}
       <AuthenticationButtons
         setUserSWA={setUserSWA}
-        handleAuthenticateWebView={handleAuthenticateWebView}
+        handleAuthenticateWebView={handleWebViewAuthentication}
         handleLoginUsingGoogle={handleLoginUsingGoogle}
         setIsJWTModalOpen={setIsJWTModalOpen}
         isJWTModalOpen={isJWTModalOpen}
         handleLogout={handleLogout}
-        isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
+        isAuthenticated={isAuthenticated}
+        setIsAuthenticated={setIsAuthenticated}
+      />
       <JWTAuthModal
         isOpen={isJWTModalOpen}
         onClose={() => setIsJWTModalOpen(false)}
