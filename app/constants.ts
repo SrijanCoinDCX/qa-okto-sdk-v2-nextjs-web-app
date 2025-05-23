@@ -40,7 +40,7 @@ export const defaultLightAppearanceOptions: AppearanceOptions = {
     ],
     otpLoginOptions: [
       { type: "email", position: 1 },
-      { type: "phone", position: 2 },
+      { type: "whatsapp", position: 2 },
     ],
     externalWallets: [
       {
@@ -100,7 +100,7 @@ export const defaultDarkAppearanceOptions: AppearanceOptions = {
     ],
     otpLoginOptions: [
       { type: "email", position: 1 },
-      { type: "phone", position: 2 },
+      { type: "whatsapp", position: 2 },
     ],
     externalWallets: [
       {
