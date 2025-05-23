@@ -1,18 +1,18 @@
 "use client";
 import React, { use, useEffect, useMemo, useContext, useState, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { LoginButton } from "@/app/components/Auth/LoginButton";
 import GetButton from "@/app/components/GetButton";
 import { AppearanceOptions, getAccount, getChains, getOrdersHistory, getPortfolio, getPortfolioActivity, getPortfolioNFT, getTokens, useOkto, useOktoWebView } from '@okto_web3/react-sdk';
 import Link from "next/link";
 import { ConfigContext } from "@/app/components/providers";
 import { STORAGE_KEY } from "./constants";
 import SignComponent from "./components/SignComponent";
-import ModalWithOTP from "./components/Auth/EmailWhatsappAuth";
 import JWTAuthModal from "./components/Auth/JWTAuthentication";
 import AuthenticationButtons from "./components/Auth/AuthenticationButtons";
 import OrderHistoryButton from "./components/Swap/OrderHistoryComponent";
 import OnboardingConfigurator, { defaultAppearanceOptions } from "./components/OnboardingConfigSetter";
+import UserOp from "./components/UserOp/UserOp";
+import UserOpEstimation from "./components/UserOpWithEstimation/UserOpWithEstimation";
 
 
 // Add type definitions
@@ -39,10 +39,10 @@ export default function Home() {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('okto-onboarding-config') : null;
     return saved ? JSON.parse(saved) : defaultAppearanceOptions;
   });
+  const [enableEstimation, setEnableEstimation] = useState(true);
 
 
   const [isJWTModalOpen, setIsJWTModalOpen] = useState(false);
-  const [jwtTokenInput, setJwtTokenInput] = useState("");
 
   //@ts-ignore
   const idToken = useMemo(() => (session ? session.id_token : null), [session]);
@@ -93,6 +93,12 @@ export default function Home() {
       }
     }
     localStorage.setItem('okto-onboarding-config', JSON.stringify(onboardingThemeConfig));
+
+    // Check and set enableEstimation from localStorage
+    const savedEstimation = localStorage.getItem('okto-enable-estimation');
+    if (savedEstimation !== null) {
+      setEnableEstimation(savedEstimation === 'true');
+    }
 
     if (idToken) {
       handleAuthenticate();
@@ -345,54 +351,26 @@ export default function Home() {
         <OrderHistoryButton />
       </div>
 
-      <div className="w-full max-w-lg rounded-lg">
+      <div className="w-full max-w-lg rounded-lg flex items-center justify-between space-x-4 mt-8">
         <h1 className="text-lg font-bold">User Operations</h1>
+        <div className="flex items-center space-x-2">
+            <label htmlFor="enableEstimation" className="text-sm font-medium text-gray-700 flex items-center">
+          <input
+            id="enableEstimation"
+            type="checkbox"
+            checked={enableEstimation}
+            onChange={(e) => {
+            setEnableEstimation(e.target.checked);
+            localStorage.setItem('okto-enable-estimation', e.target.checked.toString());
+            }}
+            className="toggle-checkbox h-5 w-5 text-purple-600 rounded focus:ring-purple-500 border-gray-300 ml-2"
+          />
+          <span className="ml-2">Enable Estimation</span>
+            </label>
+        </div>
       </div>
+      { !enableEstimation ? <UserOp /> : <UserOpEstimation /> }
 
-      <div className="w-full max-w-lg bg-white p-4 rounded-lg shadow-md flex flex-row space-x-2">
-        <Link
-          href="/pages/transfer"
-          className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
-        >
-          Transfer Token
-        </Link>
-        <div className="w-px bg-gray-300 mx-4"></div>
-        <Link
-          href="/pages/createnft"
-          className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
-        >
-          NFT Collection Creation
-        </Link>
-        <div className="w-px bg-gray-300 mx-4"></div>
-        <Link
-          href="/pages/transfernft"
-          className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
-        >
-          NFT Transfer
-        </Link>
-        <div className="w-px bg-gray-300 mx-4"></div>
-        <Link
-          href="/pages/nftmint"
-          className="flex-1 px-6 py-3 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-center"
-        >
-          NFT Mint
-        </Link>
-      </div>
-
-      <div className="flex flex-row space-x-2 w-full max-w-lg mt-8">
-        <Link
-          href="/pages/evmrawtxn"
-          className="flex-1 h-24 w-58 px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-center flex items-center justify-center"
-        >
-          EVM Raw transaction
-        </Link>
-        <Link
-          href="/pages/aptosrawtxn"
-          className="flex-1 h-24 w-58 px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-center flex items-center justify-center"
-        >
-          APTOS Raw transaction
-        </Link>
-      </div>
       <div className="flex flex-row space-x-2 w-full max-w-lg mt-8">
         <Link
           href="/pages/swap"
