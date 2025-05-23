@@ -333,7 +333,7 @@ const NFTMintEstimate = () => {
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         />
                         <div className="mt-1 text-sm text-gray-500">
-                            URL pointing to the NFT's metadata JSON file
+                            URL pointing to the NFT&apos;s metadata JSON file
                         </div>
                     </div>
 
@@ -408,7 +408,7 @@ const NFTMintEstimate = () => {
                         
                         {formData.properties.length === 0 && (
                             <div className="text-sm text-gray-500 italic">
-                                No custom properties added. Click "Add Property" to include additional metadata.
+                                No custom properties added. Click &quot;Add Property&quot; to include additional metadata.
                             </div>
                         )}
                     </div>
