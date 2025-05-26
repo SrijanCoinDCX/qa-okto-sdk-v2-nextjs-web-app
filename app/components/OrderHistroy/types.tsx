@@ -17,8 +17,9 @@ export interface ExtendedOrder extends Order {
     blockTimestamp: number;
     networkName: string;
     reason?: string;
-    details?: OrderDetails & {
+    details: OrderDetails & {
         // Additional fields for different transaction types
+        tokenAddress?: string;
         fromChainTokenAmount?: string;
         fromChainTokenAddress?: string;
         toChainTokenAddress?: string;
@@ -38,8 +39,8 @@ export interface ExtendedOrder extends Order {
         nftName?: string;
         data?: Array<{ Key: string, Value: string | any[] }>;
     };
-    transactionHash?: string[];
-    caipId?: string;
+    transactionHash: string[];
+    caipId: string;
 }
 
 // Transaction type details for rendering
@@ -106,7 +107,7 @@ export const INTENT_TYPE_DETAILS = {
                     <div>
                         <p className="text-sm text-gray-500">Amount</p>
                         <p className="font-medium text-white">
-                            {formatAmount(tx.details?.amount || '0')} {getTokenSymbolFromAddress(tx.details?.tokenAddress)}
+                            {formatAmount(tx.details?.amount || '0')}
                         </p>
                     </div>
                     <ArrowRight className="text-yellow-500 mx-4" />
@@ -130,33 +131,43 @@ export const INTENT_TYPE_DETAILS = {
         detailRenderer: (tx: ExtendedOrder) => {
             // Extract transaction details
             const txDetails = tx.details?.transactions?.[0];
-            const functionCall = txDetails?.find(detail => detail.Key === 'function')?.Value;
-            const args = txDetails?.filter(detail => detail.Key === 'functionArguments')?.[0]?.Value;
-            
+            const fromAddress = txDetails?.find(detail => detail.Key === 'from')?.Value;
+            const toAddress = txDetails?.find(detail => detail.Key === 'to')?.Value;
+            const value = txDetails?.find(detail => detail.Key === 'value')?.Value;
+
             return (
                 <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                    <div className="mb-4">
-                        <p className="text-sm text-gray-500">Function Call</p>
-                        <p className="font-medium text-white bg-gray-900 p-2 rounded mt-1">
-                            {functionCall || 'Unknown Function'}
-                        </p>
-                    </div>
-                    
-                    {Array.isArray(args) && args.length > 0 && (
+                    <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-500">Arguments</p>
-                            <div className="mt-1 space-y-2">
-                                {args.map((arg, index) => (
-                                    <div key={index} className="flex items-center gap-2 bg-gray-900 p-2 rounded">
-                                        <span className="text-gray-500">{index + 1}:</span>
-                                        <p className="font-medium text-yellow-400 text-sm truncate">
-                                            {typeof arg === 'string' ? arg : JSON.stringify(arg)}
-                                        </p>
-                                    </div>
-                                ))}
+                            <p className="text-sm text-gray-500">From</p>
+                            <div className="flex items-center gap-2">
+                                <p className="font-medium text-yellow-400">
+                                    {fromAddress?.slice(0, 6)}...{fromAddress?.slice(-4)}
+                                </p>
+                                <button className="text-gray-500 hover:text-gray-400">
+                                    <ExternalLink size={14} />
+                                </button>
                             </div>
                         </div>
-                    )}
+                        <ArrowRight className="text-yellow-500 mx-4" />
+                        <div>
+                            <p className="text-sm text-gray-500">To</p>
+                            <div className="flex items-center gap-2">
+                                <p className="font-medium text-yellow-400">
+                                    {toAddress?.slice(0, 6)}...{toAddress?.slice(-4)}
+                                </p>
+                                <button className="text-gray-500 hover:text-gray-400">
+                                    <ExternalLink size={14} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="mt-4">
+                        <p className="text-sm text-gray-500">Amount</p>
+                        <p className="font-medium text-white">
+                            {formatAmount(value || '0')}
+                        </p>
+                    </div>
                 </div>
             );
         }
@@ -292,3 +303,32 @@ export const INTENT_TYPE_DETAILS = {
         }
     }
 };
+
+function truncateMiddle(uri: string, length: number): string {
+    if (uri.length <= length) return uri;
+    const start = uri.slice(0, length / 2);
+    const end = uri.slice(-length / 2);
+    return `${start}...${end}`;
+}
+function formatAmount(fromChainTokenAmount: string | undefined): import("react").ReactNode {
+    if (!fromChainTokenAmount) return '0.0000';
+    const value = parseInt(fromChainTokenAmount, 16) / 1000000000000000000;
+    return value.toFixed(value < 0.0001 ? 8 : 4);
+}
+export function getIntentTypeDetails(intentType: string) {
+    return INTENT_TYPE_DETAILS[intentType as keyof typeof INTENT_TYPE_DETAILS] || {
+        title: 'Unknown Transaction',
+        detailRenderer: () => <p className="text-gray-500">No details available for this transaction type.</p>
+    };
+}
+export function isNFTTransaction(intentType: string): boolean {
+    return ['NFT_MINT', 'NFT_TRANSFER', 'NFT_CREATE_COLLECTION'].includes(intentType);
+}
+export function isTokenTransaction(intentType: string): boolean {
+    return ['SWAP', 'TOKEN_TRANSFER'].includes(intentType);
+}
+function getTokenSymbolFromAddress(tokenAddress: any): import("react").ReactNode {
+    // Placeholder function to get token symbol from address
+    // In a real application, this would query a token registry or use a mapping
+    return tokenAddress ? tokenAddress.slice(0, 6).toUpperCase() : 'Unknown';
+}

@@ -9,7 +9,7 @@ import { STORAGE_KEY } from "./constants";
 import SignComponent from "./components/SignComponent";
 import JWTAuthModal from "./components/Auth/JWTAuthentication";
 import AuthenticationButtons from "./components/Auth/AuthenticationButtons";
-import OrderHistoryButton from "./components/Swap/OrderHistoryComponent";
+import OrderHistoryButton from "./components/OrderHistroy/OrderHistoryComponent";
 import OnboardingConfigurator, { defaultAppearanceOptions } from "./components/OnboardingConfigSetter";
 import UserOp from "./components/UserOp/UserOp";
 import UserOpEstimation from "./components/UserOpWithEstimation/UserOpWithEstimation";
