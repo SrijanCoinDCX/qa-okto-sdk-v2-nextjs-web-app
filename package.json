@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@okto_web3/react-sdk": "^0.5.3-dev.7",
+    "@okto_web3/react-sdk": "^0.5.3-dev.8",
     "axios": "^1.7.2",
     "lucide-react": "^0.483.0",
     "next": "14.2.10",
