@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/route";
 import Navbar from "./components/Navbar";
 import Script from "next/script";
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,6 +35,7 @@ export default async function RootLayout({
         </Script>
       </head>
       <body className={inter.className}>
+        <Toaster position="top-center" />
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-P4NK3GK9"
