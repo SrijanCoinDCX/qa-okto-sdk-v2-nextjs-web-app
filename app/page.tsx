@@ -13,6 +13,7 @@ import OnboardingConfigurator, { defaultAppearanceOptions } from "./components/O
 import UserOp from "./components/UserOp/UserOp";
 import UserOpEstimation from "./components/UserOpWithEstimation/UserOpWithEstimation";
 import ConfigDetailsAndSetUp, { ConfigContextType } from "./components/ConfigDetails/ConfigDetailsAndSetUp";
+import AddFunds from "./components/Onramp/Onramp";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -211,6 +212,7 @@ export default function Home() {
       <div className="grid gap-4 w-full max-w-lg mt-8">
         <SignComponent />
         <OrderHistoryButton />
+        <AddFunds />
       </div>
 
       <div className="w-full max-w-lg rounded-lg flex items-center justify-between space-x-4 mt-8">
