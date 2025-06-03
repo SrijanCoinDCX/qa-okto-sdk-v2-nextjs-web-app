@@ -85,18 +85,44 @@ const AptosReadContractComponent = ({
     {
       name: "0x1::coin::name",
       args: [],
-      typeArguments: ["0x1::aptos_coin::AptosCoin"]
+      typeArguments: ["0x1::aptos_coin::AptosCoin"],
+    },
+    {
+      name: "0x1::coin::symbol",
+      args: [],
+      typeArguments: ["0x1::aptos_coin::AptosCoin"],
+    },
+    {
+      name: "0x1::coin::decimals",
+      args: [],
+      typeArguments: ["0x1::aptos_coin::AptosCoin"],
     },
     {
       name: "0x1::coin::balance",
       args: ["address"],
-      typeArguments: ["0x1::aptos_coin::AptosCoin"]
+      typeArguments: ["0x1::aptos_coin::AptosCoin"],
     },
     {
-      name: "0x1::account::sequence_number",
-      args: ["address"],
-      typeArguments: []
+      name: "0x1::coin::supply",
+      args: [],
+      typeArguments: ["0x1::aptos_coin::AptosCoin"],
     },
+    // {
+    //   name: "0x1::account::sequence_number",
+    //   args: ["address"],
+    //   typeArguments: [],
+    // },
+    // {
+    //   name: "0x1::coin::register",
+    //   args: [],
+    //   typeArguments: ["0x1::aptos_coin::AptosCoin"],
+    // },
+    // {
+    //   name: "0x1::coin::transfer",
+    //   args: ["address", "u64"],
+    //   typeArguments: ["0x1::aptos_coin::AptosCoin"],
+    // },
+    
   ]);
 
   const [newFunction, setNewFunction] = useState({

@@ -17,8 +17,35 @@ const defaultAbi: ABIFunction[] = [
   {
     constant: true,
     inputs: [],
+    name: "symbol",
+    outputs: [{ name: "", type: "string" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "decimals",
+    outputs: [{ name: "", type: "uint8" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
     name: "totalSupply",
     outputs: [{ name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "owner",
+    outputs: [{ name: "", type: "address" }],
     payable: false,
     stateMutability: "view",
     type: "function",
@@ -32,6 +59,51 @@ const defaultAbi: ABIFunction[] = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    constant: true,
+    inputs: [
+      { name: "addr", type: "address" },
+      { name: "addr", type: "address" },
+    ],
+    name: "VerifyAddr",
+    outputs: [{ name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  // {
+  //   constant: true,
+  //   inputs: [],
+  //   name: "_totalFee",
+  //   outputs: [{ name: "", type: "uint256" }],
+  //   payable: false,
+  //   stateMutability: "view",
+  //   type: "function",
+  // },
+  {
+    constant: true,
+    inputs: [
+      { name: "", type: "address" },
+      { name: "", type: "address" },
+    ],
+    name: "allowance",
+    outputs: [{ name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  // {
+  //   constant: false,
+  //   inputs: [
+  //     { name: "_spender", type: "address" },
+  //     { name: "_value", type: "uint256" },
+  //   ],
+  //   name: "approve",
+  //   outputs: [{ name: "", type: "bool" }],
+  //   payable: false,
+  //   stateMutability: "nonpayable",
+  //   type: "function",
+  // },
 ];
 
 const CopyButton = ({ text }: { text: string }) => {
@@ -341,7 +413,7 @@ const EvmReadContractComponent = ({ caip2Id,
           </button>
         </div>
       </CollapsibleSection>
-      
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex items-center gap-2 mb-4">
           <X className="w-5 h-5" />
