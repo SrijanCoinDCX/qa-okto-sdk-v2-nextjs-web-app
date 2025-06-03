@@ -46,7 +46,7 @@ export default function Home() {
       (session: any) => {
         // Store the session info securely
         console.log("session", session);
-        localStorage.setItem("okto_session_info", JSON.stringify(session));
+        localStorage.setItem("okto_session", JSON.stringify(session));
         setUserSWA(session.userSWA);
       }
     );
@@ -93,7 +93,8 @@ export default function Home() {
   }, [handleAuthenticate, idToken, onboardingThemeConfig]);
 
   const getSessionInfo = async () => {
-    const session = localStorage.getItem("okto_session_info");
+    const session = localStorage.getItem("okto_session");
+    console.log("Session info:", session);
     const sessionInfo = JSON.parse(session || "{}");
     return { result: sessionInfo };
   };
@@ -211,8 +212,8 @@ export default function Home() {
 
       <div className="grid gap-4 w-full max-w-lg mt-8">
         <div className="w-full rounded-lg flex items-center space-x-4">
-        <SignComponent />
-        <ReadContractComponent />
+          <SignComponent />
+          <ReadContractComponent />
         </div>
         <OrderHistoryButton />
       </div>

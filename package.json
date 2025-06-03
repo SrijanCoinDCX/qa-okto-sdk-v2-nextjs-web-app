@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@okto_web3/react-sdk": "^0.5.3-dev.12",
+    "@okto_web3/react-sdk": "^0.5.3-dev.13",
     "axios": "^1.7.2",
     "framer-motion": "^12.13.0",
     "lucide-react": "^0.483.0",
@@ -20,7 +20,8 @@
     "react-color": "^2.19.3",
     "react-dom": "^18",
     "react-hot-toast": "^2.5.2",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "viem": "^2.30.5"
   },
   "devDependencies": {
     "@types/node": "^20",

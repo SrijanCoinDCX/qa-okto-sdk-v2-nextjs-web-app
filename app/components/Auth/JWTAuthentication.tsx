@@ -21,7 +21,7 @@ export default function JWTAuthModal({ isOpen, onClose, setUserSWA, setIsAuthent
     try {
       const result = await oktoClient.loginUsingJWTAuthentication(jwtToken, (session) => {
         console.log("Session established:", session);
-        localStorage.setItem("okto_session_info", JSON.stringify(session));
+        localStorage.setItem("okto_session", JSON.stringify(session));
         setUserSWA(session.userSWA);
         setIsAuthenticated(true);
       });
