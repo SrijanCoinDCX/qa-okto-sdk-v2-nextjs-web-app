@@ -460,7 +460,7 @@ const EvmReadContractComponent = ({ caip2Id, contractAddress }: { caip2Id: strin
             </div>
             
             {newAbiEntry.inputs.length === 0 ? (
-              <p className="text-gray-500 text-sm italic p-3 bg-gray-50 rounded-lg">No input parameters. Click "Add Input" to add parameters.</p>
+              <p className="text-gray-500 text-sm italic p-3 bg-gray-50 rounded-lg">No input parameters. Click &quot;Add Input&quot; to add parameters.</p>
             ) : (
               <div className="space-y-2">
                 {newAbiEntry.inputs.map((input, index) => (
@@ -506,7 +506,7 @@ const EvmReadContractComponent = ({ caip2Id, contractAddress }: { caip2Id: strin
             </div>
             
             {newAbiEntry.outputs.length === 0 ? (
-              <p className="text-gray-500 text-sm italic p-3 bg-gray-50 rounded-lg">No output parameters. Click "Add Output" to add parameters.</p>
+              <p className="text-gray-500 text-sm italic p-3 bg-gray-50 rounded-lg">No output parameters. Click &quot;Add Output&quot; to add parameters.</p>
             ) : (
               <div className="space-y-2">
                 {newAbiEntry.outputs.map((output, index) => (
