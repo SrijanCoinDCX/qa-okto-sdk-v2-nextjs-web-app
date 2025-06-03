@@ -71,15 +71,6 @@ const defaultAbi: ABIFunction[] = [
     stateMutability: "view",
     type: "function",
   },
-  // {
-  //   constant: true,
-  //   inputs: [],
-  //   name: "_totalFee",
-  //   outputs: [{ name: "", type: "uint256" }],
-  //   payable: false,
-  //   stateMutability: "view",
-  //   type: "function",
-  // },
   {
     constant: true,
     inputs: [
@@ -92,18 +83,6 @@ const defaultAbi: ABIFunction[] = [
     stateMutability: "view",
     type: "function",
   },
-  // {
-  //   constant: false,
-  //   inputs: [
-  //     { name: "_spender", type: "address" },
-  //     { name: "_value", type: "uint256" },
-  //   ],
-  //   name: "approve",
-  //   outputs: [{ name: "", type: "bool" }],
-  //   payable: false,
-  //   stateMutability: "nonpayable",
-  //   type: "function",
-  // },
 ];
 
 const CopyButton = ({ text }: { text: string }) => {
@@ -170,8 +149,7 @@ const CollapsibleSection = ({
   );
 };
 
-const EvmReadContractComponent = ({ caip2Id,
-  contractAddress, }: { caip2Id: string, contractAddress: string; }) => {
+const EvmReadContractComponent = ({ caip2Id, contractAddress }: { caip2Id: string; contractAddress: string }) => {
   const oktoClient = useOkto();
 
   const [abiList, setAbiList] = useState<ABIFunction[]>(defaultAbi);
@@ -184,12 +162,12 @@ const EvmReadContractComponent = ({ caip2Id,
   const [chains, setChains] = useState<any[]>([]);
   const [loadingChains, setLoadingChains] = useState(true);
 
-
+  // Enhanced state for add function section
   const [newAbiEntry, setNewAbiEntry] = useState({
     name: "",
-    inputs: "",
-    outputs: "",
     stateMutability: "view",
+    inputs: [] as { name: string; type: string }[],
+    outputs: [] as { name: string; type: string }[]
   });
 
   const [isAptosChain, setIsAptosChain] = useState(false);
@@ -215,32 +193,101 @@ const EvmReadContractComponent = ({ caip2Id,
     };
     fetchChains();
   }, [oktoClient]);
+
+  // Add input parameter
+  const addInputParameter = () => {
+    setNewAbiEntry(prev => ({
+      ...prev,
+      inputs: [...prev.inputs, { name: "", type: "string" }]
+    }));
+  };
+
+  // Remove input parameter
+  const removeInputParameter = (index: number) => {
+    setNewAbiEntry(prev => ({
+      ...prev,
+      inputs: prev.inputs.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Update input parameter
+  const updateInputParameter = (index: number, field: 'name' | 'type', value: string) => {
+    setNewAbiEntry(prev => ({
+      ...prev,
+      inputs: prev.inputs.map((input, i) => 
+        i === index ? { ...input, [field]: value } : input
+      )
+    }));
+  };
+
+  // Add output parameter
+  const addOutputParameter = () => {
+    setNewAbiEntry(prev => ({
+      ...prev,
+      outputs: [...prev.outputs, { name: "", type: "string" }]
+    }));
+  };
+
+  // Remove output parameter
+  const removeOutputParameter = (index: number) => {
+    setNewAbiEntry(prev => ({
+      ...prev,
+      outputs: prev.outputs.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Update output parameter
+  const updateOutputParameter = (index: number, field: 'name' | 'type', value: string) => {
+    setNewAbiEntry(prev => ({
+      ...prev,
+      outputs: prev.outputs.map((output, i) => 
+        i === index ? { ...output, [field]: value } : output
+      )
+    }));
+  };
+
   const handleAddAbiFunction = () => {
     if (!newAbiEntry.name.trim()) {
       setError("Function name is required.");
       return;
     }
 
-    try {
-      const parsedInputs = JSON.parse(newAbiEntry.inputs || "[]");
-      const parsedOutputs = JSON.parse(newAbiEntry.outputs || "[]");
-
-      const newFunction = {
-        type: "function",
-        name: newAbiEntry.name,
-        stateMutability: newAbiEntry.stateMutability,
-        inputs: parsedInputs,
-        outputs: parsedOutputs,
-        constant: true,
-        payable: false,
-      };
-
-      setAbiList((prev) => [...prev, newFunction]);
-      setNewAbiEntry({ name: "", inputs: "", outputs: "", stateMutability: "view" });
-      setError("");
-    } catch (err) {
-      setError("Invalid input or output JSON format.");
+    // Validate inputs
+    for (let i = 0; i < newAbiEntry.inputs.length; i++) {
+      const input = newAbiEntry.inputs[i];
+      if (!input.type.trim()) {
+        setError(`Input parameter ${i + 1} type is required.`);
+        return;
+      }
     }
+
+    // Validate outputs
+    for (let i = 0; i < newAbiEntry.outputs.length; i++) {
+      const output = newAbiEntry.outputs[i];
+      if (!output.type.trim()) {
+        setError(`Output parameter ${i + 1} type is required.`);
+        return;
+      }
+    }
+
+    const newFunction: ABIFunction = {
+      type: "function",
+      name: newAbiEntry.name,
+      stateMutability: newAbiEntry.stateMutability,
+      inputs: newAbiEntry.inputs,
+      outputs: newAbiEntry.outputs,
+      constant: true,
+      payable: false,
+    };
+
+    setAbiList((prev) => [...prev, newFunction]);
+    setNewAbiEntry({ 
+      name: "", 
+      stateMutability: "view", 
+      inputs: [], 
+      outputs: [] 
+    });
+    setError("");
   };
 
   const handleArgChange = (fnName: string, inputName: string, value: string) => {
@@ -291,7 +338,6 @@ const EvmReadContractComponent = ({ caip2Id,
 
     return Object.keys(errors).length === 0;
   };
-
 
   const handleRead = async (fn: ABIFunction) => {
     // Validate inputs first
@@ -366,6 +412,12 @@ const EvmReadContractComponent = ({ caip2Id,
     setResults(newResults);
   };
 
+  const commonTypes = [
+    "string", "uint256", "uint128", "uint64", "uint32", "uint16", "uint8",
+    "int256", "int128", "int64", "int32", "int16", "int8",
+    "address", "bool", "bytes", "bytes32", "bytes16", "bytes8", "bytes4"
+  ];
+
   return (
     <div>
       {/* Add Function Section */}
@@ -375,7 +427,8 @@ const EvmReadContractComponent = ({ caip2Id,
         className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200 my-6"
         defaultOpen={false}
       >
-        <div className="space-y-4 mt-4">
+        <div className="space-y-6 mt-4">
+          {/* Function Name and State Mutability */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               placeholder="Function Name"
@@ -392,18 +445,99 @@ const EvmReadContractComponent = ({ caip2Id,
               <option value="pure">Pure</option>
             </select>
           </div>
-          <textarea
-            placeholder='Inputs JSON: [{"name": "owner", "type": "address"}]'
-            value={newAbiEntry.inputs}
-            onChange={(e) => setNewAbiEntry({ ...newAbiEntry, inputs: e.target.value })}
-            className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all h-20 resize-none"
-          />
-          <textarea
-            placeholder='Outputs JSON: [{"name": "", "type": "uint256"}]'
-            value={newAbiEntry.outputs}
-            onChange={(e) => setNewAbiEntry({ ...newAbiEntry, outputs: e.target.value })}
-            className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all h-20 resize-none"
-          />
+
+          {/* Input Parameters */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-md font-semibold text-gray-700">Input Parameters</h4>
+              <button
+                onClick={addInputParameter}
+                className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition-colors flex items-center gap-1 text-sm"
+              >
+                <Plus size={14} />
+                Add Input
+              </button>
+            </div>
+            
+            {newAbiEntry.inputs.length === 0 ? (
+              <p className="text-gray-500 text-sm italic p-3 bg-gray-50 rounded-lg">No input parameters. Click "Add Input" to add parameters.</p>
+            ) : (
+              <div className="space-y-2">
+                {newAbiEntry.inputs.map((input, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <input
+                      placeholder="Parameter name"
+                      value={input.name}
+                      onChange={(e) => updateInputParameter(index, 'name', e.target.value)}
+                      className="flex-1 border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                    <select
+                      value={input.type}
+                      onChange={(e) => updateInputParameter(index, 'type', e.target.value)}
+                      className="flex-1 border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      {commonTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => removeInputParameter(index)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Output Parameters */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-md font-semibold text-gray-700">Output Parameters</h4>
+              <button
+                onClick={addOutputParameter}
+                className="bg-purple-500 text-white px-3 py-1 rounded-md hover:bg-purple-600 transition-colors flex items-center gap-1 text-sm"
+              >
+                <Plus size={14} />
+                Add Output
+              </button>
+            </div>
+            
+            {newAbiEntry.outputs.length === 0 ? (
+              <p className="text-gray-500 text-sm italic p-3 bg-gray-50 rounded-lg">No output parameters. Click "Add Output" to add parameters.</p>
+            ) : (
+              <div className="space-y-2">
+                {newAbiEntry.outputs.map((output, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <input
+                      placeholder="Parameter name (optional)"
+                      value={output.name}
+                      onChange={(e) => updateOutputParameter(index, 'name', e.target.value)}
+                      className="flex-1 border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    />
+                    <select
+                      value={output.type}
+                      onChange={(e) => updateOutputParameter(index, 'type', e.target.value)}
+                      className="flex-1 border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    >
+                      {commonTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => removeOutputParameter(index)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleAddAbiFunction}
             className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center gap-2 font-medium"
