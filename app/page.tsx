@@ -13,6 +13,7 @@ import OnboardingConfigurator, { defaultAppearanceOptions } from "./components/O
 import UserOp from "./components/UserOp/UserOp";
 import UserOpEstimation from "./components/UserOpWithEstimation/UserOpWithEstimation";
 import ConfigDetailsAndSetUp, { ConfigContextType } from "./components/ConfigDetails/ConfigDetailsAndSetUp";
+import ReadContractComponent from "./components/RawRead/ReadContractComponent";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -209,7 +210,10 @@ export default function Home() {
       </div>
 
       <div className="grid gap-4 w-full max-w-lg mt-8">
+        <div className="w-full rounded-lg flex items-center space-x-4">
         <SignComponent />
+        <ReadContractComponent />
+        </div>
         <OrderHistoryButton />
       </div>
 
