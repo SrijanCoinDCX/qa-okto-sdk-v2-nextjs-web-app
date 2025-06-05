@@ -332,6 +332,13 @@ const DynamicReadContractComponent = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Chain (CAIP2)
                 </label>
+                <input
+                  className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  value={caip2Id}
+                  onChange={(e) => setCaip2Id(e.target.value)}
+                  placeholder="Enter chain CAIP ID"
+                />
+                {/* 
                 <select
                   className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   value={caip2Id}
@@ -344,6 +351,7 @@ const DynamicReadContractComponent = () => {
                     </option>
                   ))}
                 </select>
+                */}
               </div>
               {isAptosChain ? (
                 <div></div>
