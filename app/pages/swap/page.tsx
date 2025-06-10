@@ -12,13 +12,14 @@ export default function SwapTokenPage() {
                 style={{ backgroundImage: "url('https://app.osmosis.zone/images/osmosis-home-bg-alt.svg')" }}
             >
                 <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
-                    <div className="flex items-center justify-center min-h-min min-w-min">
-                        <PortfolioCard />
+                    <div className="flex flex-row items-start justify-center gap-4 min-h-min min-w-min">
+                        <div className="flex-shrink-0">
+                            <SwapTokensPage />
+                        </div>
+                        <div className="flex-shrink-0">
+                            <PortfolioCard />
+                        </div>
                     </div>
-                    <div className="flex items-center justify-center min-h-min min-w-min">
-                        <SwapTokensPage />
-                    </div>
-
                 </div>
             </div>
         </main>
