@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import {
     useOkto,
     getTokensForSwap,
-    getPortfolio,
+    getPortfolioForSwap,
     TokenEntity,
     TokenListingFilter,
     EstimationDetails,
@@ -48,7 +48,7 @@ export default function SwapTokensPage() {
 
     const loadPortfolio = async () => {
         try {
-            const data = await getPortfolio(oktoClient);
+            const data = await getPortfolioForSwap(oktoClient);
             setPortfolio(data);
         } catch (err) {
             setError("Failed to load portfolio");
@@ -111,7 +111,7 @@ export default function SwapTokensPage() {
         if (!portfolio?.groupTokens) return "0";
         return portfolio.groupTokens.find(
             (t: any) => t.tokenAddress === token.details.address
-        )?.balance || "0";
+        )?.viewBalance || "0";
     };
 
     const handleSwap = async () => {

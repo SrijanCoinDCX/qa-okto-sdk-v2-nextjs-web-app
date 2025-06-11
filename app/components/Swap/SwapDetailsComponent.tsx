@@ -99,9 +99,9 @@ export default function SwapDetailsComponent({
             <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Exchange Rate</span>
                 <span>
-                    1 {fromToken?.details.symbol} ≈ {details.estimation.exchangeRate 
-                        ? parseFloat(details.estimation.exchangeRate).toFixed(6) 
-                        : "0"} {toToken?.details.symbol}
+                    1 {fromToken?.details.symbol} ≈ {(
+                        parseFloat(formattedToAmount) / parseFloat(formattedFromAmount || "1")
+                    ).toFixed(6)} {toToken?.details.symbol}
                 </span>
             </div>
 

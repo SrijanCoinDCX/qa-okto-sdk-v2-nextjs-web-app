@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Modal from "./Modal";
 import {
     useOkto,
-    getPortfolio,
+    getPortfolioForSwap,
 } from "@okto_web3/react-sdk";
 
 interface PortfolioData {
@@ -18,7 +18,9 @@ interface PortfolioData {
             name: string;
             symbol: string;
             tokenImage?: string;
+            precision?: string;
             balance: string;
+            viewBalance: string;
             holdingsPriceInr: string;
         }>;
     }>;
@@ -49,7 +51,7 @@ const PortfolioCard = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await getPortfolio(oktoClient);
+            const data = await getPortfolioForSwap(oktoClient);
             setPortfolio(data);
             setLastUpdated(new Date());
         } catch (err) {
@@ -68,7 +70,7 @@ const PortfolioCard = () => {
         setIsRefreshing(true);
         setError(null);
         try {
-            const data = await getPortfolio(oktoClient);
+            const data = await getPortfolioForSwap(oktoClient);
             setPortfolio(data);
             setLastUpdated(new Date());
         } catch (err) {
@@ -293,7 +295,7 @@ const PortfolioCard = () => {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="font-mono font-medium text-gray-800">
-                                                        {parseFloat(token.balance).toLocaleString('en-US', {
+                                                        {parseFloat(token.viewBalance).toLocaleString('en-US', {
                                                             maximumFractionDigits: 4,
                                                             minimumFractionDigits: 2
                                                         })}

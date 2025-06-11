@@ -15,7 +15,7 @@ export default function TokenList({ tokens, portfolio, loading, onSelect }: Toke
     const found = portfolio.groupTokens.find(
       (t: any) => t.tokenAddress === token.details.address
     );
-    return found?.balance || "0";
+    return found?.viewBalance || "0";
   };
 
   if (loading) {
