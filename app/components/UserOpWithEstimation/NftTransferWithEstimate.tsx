@@ -79,7 +79,7 @@ const NFTTransferEstimate = () => {
     const validateForm = () => {
         if (!formData.selectedChain) return 'Please select a network';
         if (!formData.collectionAddress || !formData.collectionAddress.startsWith('0x')) return 'Please enter a valid collection address';
-        if (!formData.recipientWalletAddress || !formData.recipientWalletAddress.startsWith('0x')) return 'Please enter a valid recipient address';
+        if (!formData.recipientWalletAddress) return 'Please enter a valid recipient address';
         if (!formData.amount || Number(formData.amount) <= 0) return 'Please enter a valid amount';
         if (formData.nftType === 'ERC721' && !formData.nftId) return 'NFT ID is required for ERC721 tokens';
         return null;

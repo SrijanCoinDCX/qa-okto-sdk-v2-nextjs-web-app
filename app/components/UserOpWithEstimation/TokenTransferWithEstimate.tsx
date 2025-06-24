@@ -88,7 +88,7 @@ const TokenTransferEstimate = () => {
         if (!formData.selectedChain) return 'Please select a network';
         if (!formData.selectedToken) return 'Please select a token';
         if (!formData.amount || Number(formData.amount) <= 0) return 'Please enter a valid amount';
-        if (!formData.recipient || !formData.recipient.startsWith('0x')) return 'Please enter a valid recipient address';
+        if (!formData.recipient) return 'Please enter a valid recipient address';
         return null;
     };
 
