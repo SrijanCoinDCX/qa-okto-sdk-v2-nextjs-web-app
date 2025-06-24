@@ -164,6 +164,8 @@ function SVMRawTransaction() {
       try {
         parsedInstructions = JSON.parse(instructions);
         parsedSigners = JSON.parse(signers);
+        console.log("Parsed Instructions:", parsedInstructions);
+        console.log("Parsed Signers:", parsedSigners);
       } catch (e) {
         throw new Error("Invalid JSON format in instructions or signers");
       }
@@ -181,6 +183,7 @@ function SVMRawTransaction() {
           feePayerAddress: formattedFeePayer,
         }]
       };
+      console.log("Raw Transaction Intent Params:", rawTransactionIntentParams);
 
       const createdUserOp = await svmRawTransaction(
         oktoClient,
