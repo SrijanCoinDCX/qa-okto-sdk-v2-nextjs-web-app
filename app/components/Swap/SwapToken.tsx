@@ -132,10 +132,10 @@ export default function SwapTokensPage() {
                 toChainCaip2Id: `eip155:${toToken.details.chainId}`,
                 fromChainTokenAmount: formattedAmount,
                 minToTokenAmount: "0",
-                slippage: "2",
-                sameChainFee: "10",
+                slippage: "1.5",
+                sameChainFee: "0",
                 sameChainFeeCollector: "0x2c2505D0E21f32F38bCEBeca1C331ab4069bBCb9",
-                crossChainFee: "10",
+                crossChainFee: "0",
                 crossChainFeeCollector: "0x2c2505D0E21f32F38bCEBeca1C331ab4069bBCb9",
                 advancedSettings: {},
             };
@@ -184,14 +184,14 @@ export default function SwapTokensPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    
+
                     <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             Transaction Submitted Successfully!
                         </h3>
                         <p className="text-gray-600">Your swap is being processed on the blockchain.</p>
                     </div>
-                    
+
                     {jobId && (
                         <div className="bg-gray-50 rounded-xl p-4">
                             <div className="flex items-center justify-between">
@@ -216,7 +216,7 @@ export default function SwapTokensPage() {
                             </div>
                         </div>
                     )}
-                    
+
                     <button
                         onClick={onClose}
                         className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-medium transition-colors"
@@ -292,7 +292,7 @@ export default function SwapTokensPage() {
                                         Balance: {fromToken ? getBalance(fromToken) : "0"}
                                     </span>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between">
                                     <input
                                         type="number"
@@ -301,7 +301,7 @@ export default function SwapTokensPage() {
                                         onChange={(e) => setAmount(e.target.value)}
                                         className="bg-transparent text-3xl font-semibold placeholder-gray-300 w-full mr-4 focus:outline-none"
                                     />
-                                    
+
                                     <button
                                         onClick={() => handleTokenSelect("from")}
                                         className="flex items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-200 hover:border-violet-300 hover:shadow-md transition-all duration-200 min-w-0 flex-shrink-0"
@@ -346,7 +346,7 @@ export default function SwapTokensPage() {
                                     Balance: {toToken ? getBalance(toToken) : "0"}
                                 </span>
                             </div>
-                            
+
                             <div className="flex items-center justify-between">
                                 <div className="text-3xl font-semibold text-gray-900 flex-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                     {swapEstimate?.details?.estimation?.outputAmount
@@ -356,7 +356,7 @@ export default function SwapTokensPage() {
                                         )
                                         : "0.0"}
                                 </div>
-                                
+
                                 <button
                                     onClick={() => handleTokenSelect("to")}
                                     className="flex items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-200 hover:border-violet-300 hover:shadow-md transition-all duration-200 min-w-0 flex-shrink-0"
