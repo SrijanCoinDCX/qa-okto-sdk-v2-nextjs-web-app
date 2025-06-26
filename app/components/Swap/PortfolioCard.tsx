@@ -334,6 +334,9 @@ const PortfolioCard = () => {
                                                                             maximumFractionDigits: 8
                                                                         })} {token.symbol}
                                                                     </p>
+                                                                    <p className="text-sm font-medium text-gray-400">
+                                                                        Raw Balance: {token.balance}
+                                                                    </p>
                                                                     <p className="text-sm font-medium text-gray-600">
                                                                         ₹{parseFloat(token.holdingsPriceInr).toLocaleString('en-IN', {
                                                                             maximumFractionDigits: 2,
