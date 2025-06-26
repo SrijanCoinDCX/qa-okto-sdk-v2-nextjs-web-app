@@ -295,7 +295,7 @@ const PortfolioCard = () => {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="font-mono font-medium text-gray-800">
-                                                        {parseFloat(token.viewBalance).toLocaleString('en-US', {
+                                                        {parseFloat(token.balance).toLocaleString('en-US', {
                                                             maximumFractionDigits: 4,
                                                             minimumFractionDigits: 2
                                                         })}
