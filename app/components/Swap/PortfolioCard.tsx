@@ -272,43 +272,86 @@ const PortfolioCard = () => {
                                     <p className="mt-2 text-gray-500">No assets found in your portfolio</p>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    {portfolio.groupTokens.map((group, groupIndex) => (
-                                        group.tokens?.map((token, tokenIndex) => (
-                                            <div
-                                                key={`${groupIndex}-${tokenIndex}-${token.id}`}
-                                                className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all duration-200"
-                                            >
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="relative">
-                                                        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-20 animate-pulse"></div>
-                                                        <img
-                                                            src={token.tokenImage || "/token-placeholder.png"}
-                                                            alt={token.name}
-                                                            className="w-10 h-10 rounded-full relative z-10 border-2 border-white shadow-sm"
-                                                        />
+                                <div className="space-y-6">
+                                    {portfolio.groupTokens.map((group, groupIndex) => 
+                                        group.tokens && (<div key={`group-${groupIndex}`} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                                            {/* Group Header */}
+                                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 border-b border-gray-200">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center space-x-3">
+                                                        <div className="bg-blue-100 rounded-lg p-2">
+                                                            <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                                                            </svg>
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="font-bold text-gray-800">Token Group</h3>
+                                                            {group.tokens ? (
+                                                                <p className="text-sm text-gray-500">{group.tokens.length} tokens</p>
+                                                            ) : null}
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-bold text-gray-800">{token.symbol}</p>
-                                                        <p className="text-sm text-gray-500">{token.name}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="font-mono font-medium text-gray-800">
-                                                        {parseFloat(token.viewBalance).toLocaleString('en-US', {
-                                                            maximumFractionDigits: 4,
-                                                            minimumFractionDigits: 2
-                                                        })}
-                                                    </p>
-                                                    <p className="text-sm text-gray-500">
-                                                        ₹{parseFloat(token.holdingsPriceInr).toLocaleString('en-IN', {
-                                                            maximumFractionDigits: 2,
-                                                            minimumFractionDigits: 2
-                                                        })}
-                                                    </p>
                                                 </div>
                                             </div>
-                                        ))
+
+                                            {/* Tokens List */}
+                                            <div className="divide-y divide-gray-100">
+                                                {group.tokens?.map((token, tokenIndex) => (
+                                                    <div
+                                                        key={`${groupIndex}-${tokenIndex}-${token.id}`}
+                                                        className="p-4 hover:bg-gray-50 transition-colors duration-200"
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            {/* Token Info */}
+                                                            <div className="flex items-center space-x-4">
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-20 animate-pulse"></div>
+                                                                    <img
+                                                                        src={token.tokenImage || "/token-placeholder.png"}
+                                                                        alt={token.name}
+                                                                        className="h-12 rounded-full relative z-10 border-2 border-white shadow-sm"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <div className="flex items-center space-x-2">
+                                                                        <h4 className="font-bold text-gray-800">{token.symbol}</h4>
+                                                                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                                                            {token.symbol}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-sm text-gray-500">{token.name}</p>
+                                                                    {token.id && (
+                                                                        <p className="text-xs text-gray-400 font-mono mt-1">
+                                                                            {token.id.slice(0, 6)}...{token.id.slice(-4)}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Balance Info */}
+                                                            <div className="text-right">
+                                                                <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+                                                                    <p className="font-mono text-lg font-medium text-gray-800">
+                                                                        {Number(token.viewBalance).toLocaleString(undefined, {
+                                                                            maximumFractionDigits: 8
+                                                                        })} {token.symbol}
+                                                                    </p>
+                                                                    <p className="text-sm font-medium text-gray-400">
+                                                                        Raw Balance: {token.balance}
+                                                                    </p>
+                                                                    <p className="text-sm font-medium text-gray-600">
+                                                                        ₹{parseFloat(token.holdingsPriceInr).toLocaleString('en-IN', {
+                                                                            maximumFractionDigits: 2,
+                                                                            minimumFractionDigits: 2
+                                                                        })}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             )}
