@@ -343,12 +343,6 @@ const PortfolioCard = () => {
                                                                             minimumFractionDigits: 2
                                                                         })}
                                                                     </p>
-                                                                    <p className="text-xs text-gray-500">
-                                                                        ${(parseFloat(token.holdingsPriceInr) / 83).toLocaleString('en-US', {
-                                                                            maximumFractionDigits: 2,
-                                                                            minimumFractionDigits: 2
-                                                                        })}
-                                                                    </p>
                                                                 </div>
                                                             </div>
                                                         </div>
