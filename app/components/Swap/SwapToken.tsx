@@ -111,7 +111,7 @@ export default function SwapTokensPage() {
         if (!portfolio?.groupTokens) return "0";
         return portfolio.groupTokens.find(
             (t: any) => t.tokenAddress === token.details.address
-        )?.viewBalance || "0";
+        )?.balance || "0";
     };
 
     const handleSwap = async () => {
