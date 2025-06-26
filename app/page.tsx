@@ -234,7 +234,7 @@ export default function Home() {
             <ReadContractComponent />
           </div>
           <OrderHistoryButton />
-          <AddFunds />
+          {/* <AddFunds /> */}
         </div>
       )}
 
