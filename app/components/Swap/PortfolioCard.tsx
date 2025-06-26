@@ -295,10 +295,7 @@ const PortfolioCard = () => {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="font-mono font-medium text-gray-800">
-                                                        {parseFloat(token.balance).toLocaleString('en-US', {
-                                                            maximumFractionDigits: 4,
-                                                            minimumFractionDigits: 2
-                                                        })}
+                                                        {Number(token.balance) / Math.pow(10, Number(token.precision ?? 0))}
                                                     </p>
                                                     <p className="text-sm text-gray-500">
                                                         ₹{parseFloat(token.holdingsPriceInr).toLocaleString('en-IN', {
