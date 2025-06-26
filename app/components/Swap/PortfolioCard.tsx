@@ -286,7 +286,7 @@ const PortfolioCard = () => {
                                                         </div>
                                                         <div>
                                                             <h3 className="font-bold text-gray-800">Token Group {groupIndex + 1}</h3>
-                                                            <p className="text-sm text-gray-500">{group.tokens.length} tokens</p>
+                                                            <p className="text-sm text-gray-500">{group.tokens?.length || 0} tokens</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -307,7 +307,7 @@ const PortfolioCard = () => {
                                                                     <img
                                                                         src={token.tokenImage || "/token-placeholder.png"}
                                                                         alt={token.name}
-                                                                        className="w-12 h-12 rounded-full relative z-10 border-2 border-white shadow-sm"
+                                                                        className="h-12 rounded-full relative z-10 border-2 border-white shadow-sm"
                                                                     />
                                                                 </div>
                                                                 <div>
