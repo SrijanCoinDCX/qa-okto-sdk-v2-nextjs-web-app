@@ -739,6 +739,7 @@ function TransferNFT() {
               value={type}
               onChange={(e) => setType(e.target.value)}
             >
+              <option value="NFT">NFT</option>
               <option value="ERC721">ERC721</option>
               <option value="ERC1155">ERC1155</option>
             </select>

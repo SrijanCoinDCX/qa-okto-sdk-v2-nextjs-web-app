@@ -89,7 +89,7 @@ const SignComponent: React.FC<SignComponentProps> = () => {
   return (
     <div className="w-full">
       {/* Main Buttons */}
-      <div className="w-full grid grid-cols-2 justify-center items-center md:flex-row gap-4">
+      
         <button
           onClick={() => handleOpenInputModal("message")}
           className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
@@ -102,7 +102,7 @@ const SignComponent: React.FC<SignComponentProps> = () => {
         >
           Sign Typed Data
         </button> */}
-      </div>
+
 
       {/* Input Modal */}
       {inputModalVisible && (

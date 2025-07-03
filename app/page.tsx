@@ -13,6 +13,7 @@ import OnboardingConfigurator, { defaultAppearanceOptions } from "./components/O
 import UserOp from "./components/UserOp/UserOp";
 import UserOpEstimation from "./components/UserOpWithEstimation/UserOpWithEstimation";
 import ConfigDetailsAndSetUp, { ConfigContextType } from "./components/ConfigDetails/ConfigDetailsAndSetUp";
+import ReadContractComponent from "./components/RawRead/ReadContractComponent";
 import AddFunds from "./components/Onramp/Onramp";
 
 export default function Home() {
@@ -46,7 +47,7 @@ export default function Home() {
       (session: any) => {
         // Store the session info securely
         console.log("session", session);
-        localStorage.setItem("okto_session_info", JSON.stringify(session));
+        localStorage.setItem("okto_session", JSON.stringify(session));
         setUserSWA(session.userSWA);
       }
     );
@@ -93,7 +94,8 @@ export default function Home() {
   }, [handleAuthenticate, idToken, onboardingThemeConfig]);
 
   const getSessionInfo = async () => {
-    const session = localStorage.getItem("okto_session_info");
+    const session = localStorage.getItem("okto_session");
+    console.log("Session info:", session);
     const sessionInfo = JSON.parse(session || "{}");
     return { result: sessionInfo };
   };
@@ -159,6 +161,21 @@ export default function Home() {
     }
   }
 
+  async function handleLoginUsingApple() {
+    try {
+      const result = await oktoClient.loginUsingSocial('apple');
+      console.log("Apple login result:", result);
+      if (typeof result === "string" && result) {
+        setUserSWA(result);
+        setIsAuthenticated(true);
+      }
+      return { result };
+    } catch (error) {
+      console.error("Apple login failed:", error);
+      return { error };
+    }
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center space-y-6 p-12 bg-violet-200">
       <ConfigDetailsAndSetUp userSWA={userSWA} config={config} setConfig={setConfig} />
@@ -181,6 +198,7 @@ export default function Home() {
         setUserSWA={setUserSWA}
         handleAuthenticateWebView={handleWebViewAuthentication}
         handleLoginUsingGoogle={handleLoginUsingGoogle}
+        handleLoginUsingApple={handleLoginUsingApple}
         setIsJWTModalOpen={setIsJWTModalOpen}
         isJWTModalOpen={isJWTModalOpen}
         handleLogout={handleLogout}
@@ -209,11 +227,16 @@ export default function Home() {
         <GetButton title="getTokens" apiFn={getTokens} />
       </div>
 
-      <div className="grid gap-4 w-full max-w-lg mt-8">
-        <SignComponent />
-        <OrderHistoryButton />
-        <AddFunds />
-      </div>
+      {isAuthenticated && (
+        <div className="grid gap-4 w-full max-w-lg mt-8">
+          <div className="w-full rounded-lg flex items-center space-x-4">
+            <SignComponent />
+            <ReadContractComponent />
+          </div>
+          <OrderHistoryButton />
+          <AddFunds />
+        </div>
+      )}
 
       <div className="w-full max-w-lg rounded-lg flex items-center justify-between space-x-4 mt-8">
         <h1 className="text-lg font-bold">User Operations</h1>

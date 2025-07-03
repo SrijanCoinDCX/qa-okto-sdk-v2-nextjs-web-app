@@ -5,10 +5,10 @@ import { useState, useEffect } from "react";
 import {
     useOkto,
     getTokensForSwap,
-    getPortfolio,
+    getPortfolioForSwap,
     TokenEntity,
     TokenListingFilter,
-    SwapDetails,
+    EstimationDetails,
 } from "@okto_web3/react-sdk";
 import { swapToken } from "@okto_web3/react-sdk/userop";
 import { ArrowPathIcon, ChevronDownIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
@@ -22,7 +22,7 @@ import { AxiosError } from "axios";
 
 interface SwapEstimateResult {
     userOp: UserOp;
-    details: SwapDetails;
+    details: EstimationDetails;
 }
 
 interface ExecutionResult {
@@ -43,12 +43,12 @@ export default function SwapTokensPage() {
     const [error, setError] = useState("");
     const [swapEstimate, setSwapEstimate] = useState<SwapEstimateResult>();
     const [showDetails, setShowDetails] = useState(false);
-    const [executionResult, setExecutionResult] =
-        useState<ExecutionResult | null>(null);
+    const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
+    const [feePayerAddress, setFeePayerAddress] = useState<`0x${string}` | undefined>(undefined);
 
     const loadPortfolio = async () => {
         try {
-            const data = await getPortfolio(oktoClient);
+            const data = await getPortfolioForSwap(oktoClient);
             setPortfolio(data);
         } catch (err) {
             setError("Failed to load portfolio");
@@ -130,17 +130,17 @@ export default function SwapTokensPage() {
                 fromChainCaip2Id: `eip155:${fromToken.details.chainId}`,
                 toChainTokenAddress: toToken.details.address,
                 toChainCaip2Id: `eip155:${toToken.details.chainId}`,
-                fromChainTokenAmount: formattedAmount, // Use converted amount here
+                fromChainTokenAmount: formattedAmount,
                 minToTokenAmount: "0",
-                slippage: "2",
-                sameChainFee: "10",
+                slippage: "1.5",
+                sameChainFee: "0",
                 sameChainFeeCollector: "0x2c2505D0E21f32F38bCEBeca1C331ab4069bBCb9",
-                crossChainFee: "10",
+                crossChainFee: "0",
                 crossChainFeeCollector: "0x2c2505D0E21f32F38bCEBeca1C331ab4069bBCb9",
                 advancedSettings: {},
             };
 
-            const result = await swapToken(oktoClient, data);
+            const result = await swapToken(oktoClient, data, feePayerAddress);
             setSwapEstimate(result);
             setShowDetails(true);
             setLoading(false);
@@ -166,35 +166,60 @@ export default function SwapTokensPage() {
         onClose: () => void;
         jobId?: string
     }) => {
+        const [copied, setCopied] = useState(false);
+
         const copyToClipboard = () => {
             if (jobId) {
                 navigator.clipboard.writeText(jobId);
-                alert("Job ID copied to clipboard!");
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
             }
         };
 
         return (
             <Modal isOpen={isOpen} onClose={onClose} title="Swap Successful">
-                <div className="space-y-4">
-                    <div className="text-center">
-                        <div className="text-green-600 font-medium mb-2">
-                            Transaction submitted successfully!
-                        </div>
-                        {jobId && (
-                            <div className="bg-gray-100 p-3 rounded-lg relative">
-                                <div className="text-sm font-mono break-all">{jobId}</div>
+                <div className="text-center space-y-6">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            Transaction Submitted Successfully!
+                        </h3>
+                        <p className="text-gray-600">Your swap is being processed on the blockchain.</p>
+                    </div>
+
+                    {jobId && (
+                        <div className="bg-gray-50 rounded-xl p-4">
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm font-mono text-gray-700 truncate flex-1 mr-2">
+                                    {jobId}
+                                </div>
                                 <button
                                     onClick={copyToClipboard}
-                                    className="absolute top-2 right-2 p-1 hover:bg-gray-200 rounded"
+                                    className="flex items-center space-x-1 px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
                                 >
-                                    <span className="text-xs text-gray-600">Copy</span>
+                                    {copied ? (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    )}
+                                    <span className="text-sm">{copied ? 'Copied!' : 'Copy'}</span>
                                 </button>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
+
                     <button
                         onClick={onClose}
-                        className="w-full mt-4 bg-violet-600 hover:bg-violet-700 text-white py-2 rounded-lg"
+                        className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-medium transition-colors"
                     >
                         Close
                     </button>
@@ -216,10 +241,8 @@ export default function SwapTokensPage() {
                 jobId,
             });
 
-            // Close details modal and reset form
             setShowDetails(false);
             setAmount("");
-
             loadPortfolio();
         } catch (err: any) {
             console.error("Error executing swap:", err);
@@ -235,121 +258,168 @@ export default function SwapTokensPage() {
 
     return (
         <main className="p-4 md:p-8">
-            <div className="max-w-md mx-auto bg-white rounded-3xl shadow-xl p-6">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-2xl font-bold text-gray-800">Swap Tokens</h1>
-                    <button
-                        onClick={() => loadPortfolio()}
-                        className="p-2 hover:bg-gray-100 rounded-full"
-                    >
-                        <ArrowPathIcon className="w-5 h-5 text-gray-600" />
-                    </button>
-                </div>
-
-                {error && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">{error}</div>
-                )}
-
-                {/* From Token Section */}
-                <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                    <div className="flex justify-between mb-2">
-                        <span className="text-sm text-gray-500">From</span>
-                        <span className="text-sm text-gray-600">
-                            Balance: {fromToken ? getBalance(fromToken) : "0"}
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <input
-                            type="number"
-                            placeholder="0.0"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            className="bg-transparent text-2xl font-medium w-full mr-2"
-                        />
-                        <button
-                            onClick={() => handleTokenSelect("from")}
-                            className="flex items-center bg-white px-3 py-2 rounded-lg shadow-sm"
-                        >
-                            {fromToken ? (
-                                <>
-                                    <img
-                                        src={fromToken.details.logo || "/token-placeholder.png"}
-                                        alt={fromToken.details.symbol}
-                                        width={24}
-                                        height={24}
-                                        className="rounded-full"
-                                    />
-                                    <span className="mx-2 font-medium">
-                                        {fromToken.details.symbol}
-                                    </span>
-                                </>
-                            ) : (
-                                <span className="font-medium">Select</span>
-                            )}
-                            <ChevronDownIcon className="w-4 h-4 ml-1 text-gray-400" />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Switch Button */}
-                <div className="flex justify-center -my-3">
-                    <button
-                        onClick={switchTokens}
-                        className="bg-white p-2 rounded-full shadow-lg border border-gray-100 hover:bg-gray-50 z-10"
-                    >
-                        <ArrowUpDownIcon className="w-5 h-5 text-gray-600 transform transition-transform duration-300 hover:rotate-180" />
-                    </button>
-                </div>
-
-                {/* To Token Section */}
-                <div className="bg-gray-50 rounded-xl p-4 mt-4">
-                    <div className="flex justify-between mb-2">
-                        <span className="text-sm text-gray-500">To</span>
-                        <span className="text-sm text-gray-600">
-                            Balance: {toToken ? getBalance(toToken) : "0"}
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div className="w-1/2 text-2xl font-medium overflow-hidden text-ellipsis whitespace-nowrap">
-                            {swapEstimate?.details?.estimation?.outputAmount
-                                ? formattedOutputAmount(
-                                    swapEstimate.details.estimation.outputAmount,
-                                    toToken?.details.decimals ? parseInt(toToken.details.decimals) : 18
-                                )
-                                : "0.0"}
+            <div className="max-w-md mx-auto">
+                {/* Main Card */}
+                <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-6">
+                        <div className="flex justify-between items-center">
+                            <h1 className="text-2xl font-bold text-white">Swap Tokens</h1>
+                            <button
+                                onClick={() => loadPortfolio()}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <ArrowPathIcon className="w-5 h-5 text-white" />
+                            </button>
                         </div>
-                        <button
-                            onClick={() => handleTokenSelect("to")}
-                            className="flex items-center bg-white px-3 py-2 rounded-lg shadow-sm"
-                        >
-                            {toToken ? (
-                                <>
-                                    <img
-                                        src={toToken.details.logo || "/token-placeholder.png"}
-                                        alt={toToken.details.symbol}
-                                        width={24}
-                                        height={24}
-                                        className="rounded-full"
-                                    />
-                                    <span className="mx-2 font-medium">
-                                        {toToken.details.symbol}
+                    </div>
+
+                    <div className="p-6">
+                        {/* Error Display */}
+                        {error && (
+                            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></div>
+                                <span className="text-sm">{error}</span>
+                            </div>
+                        )}
+
+                        {/* From Token Section */}
+                        <div className="relative">
+                            <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="text-sm font-medium text-gray-600">From</span>
+                                    <span className="text-sm text-gray-500">
+                                        Balance: {fromToken ? getBalance(fromToken) : "0"}
                                     </span>
-                                </>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                    <input
+                                        type="number"
+                                        placeholder="0.0"
+                                        value={amount}
+                                        onChange={(e) => setAmount(e.target.value)}
+                                        className="bg-transparent text-3xl font-semibold placeholder-gray-300 w-full mr-4 focus:outline-none"
+                                    />
+
+                                    <button
+                                        onClick={() => handleTokenSelect("from")}
+                                        className="flex items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-200 hover:border-violet-300 hover:shadow-md transition-all duration-200 min-w-0 flex-shrink-0"
+                                    >
+                                        {fromToken ? (
+                                            <>
+                                                <img
+                                                    src={fromToken.details.logo || "/token-placeholder.png"}
+                                                    alt={fromToken.details.symbol}
+                                                    width={24}
+                                                    height={24}
+                                                    className="rounded-full mr-2"
+                                                />
+                                                <span className="font-semibold text-gray-900 mr-2">
+                                                    {fromToken.details.symbol}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className="font-semibold text-gray-600 mr-2">Select</span>
+                                        )}
+                                        <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Switch Button */}
+                            <div className="flex justify-center -my-3 relative z-10">
+                                <button
+                                    onClick={switchTokens}
+                                    className="bg-white p-3 rounded-full shadow-lg border-2 border-gray-100 hover:border-violet-300 hover:shadow-xl transition-all duration-300 hover:scale-105"
+                                >
+                                    <ArrowUpDownIcon className="w-5 h-5 text-violet-600 transform transition-transform duration-300 hover:rotate-180" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* To Token Section */}
+                        <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 mt-4">
+                            <div className="flex justify-between items-center mb-3">
+                                <span className="text-sm font-medium text-gray-600">To</span>
+                                <span className="text-sm text-gray-500">
+                                    Balance: {toToken ? getBalance(toToken) : "0"}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                <div className="text-3xl font-semibold text-gray-900 flex-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    {swapEstimate?.details?.estimation?.outputAmount
+                                        ? formattedOutputAmount(
+                                            swapEstimate.details.estimation.outputAmount,
+                                            toToken?.details.decimals ? parseInt(toToken.details.decimals) : 18
+                                        )
+                                        : "0.0"}
+                                </div>
+
+                                <button
+                                    onClick={() => handleTokenSelect("to")}
+                                    className="flex items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-200 hover:border-violet-300 hover:shadow-md transition-all duration-200 min-w-0 flex-shrink-0"
+                                >
+                                    {toToken ? (
+                                        <>
+                                            <img
+                                                src={toToken.details.logo || "/token-placeholder.png"}
+                                                alt={toToken.details.symbol}
+                                                width={24}
+                                                height={24}
+                                                className="rounded-full mr-2"
+                                            />
+                                            <span className="font-semibold text-gray-900 mr-2">
+                                                {toToken.details.symbol}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="font-semibold text-gray-600 mr-2">Select</span>
+                                    )}
+                                    <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Fee Payer Address */}
+                        <div className="mt-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Fee Payer Address (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100 focus:outline-none transition-all"
+                                value={feePayerAddress || ""}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value.startsWith("0x")) {
+                                        setFeePayerAddress(value as `0x${string}`);
+                                    } else {
+                                        setFeePayerAddress(undefined);
+                                    }
+                                }}
+                                placeholder="Enter fee payer address for sponsored transactions"
+                            />
+                        </div>
+
+                        {/* Swap Button */}
+                        <button
+                            onClick={handleSwap}
+                            disabled={!fromToken || !toToken || !amount || loading}
+                            className="w-full mt-8 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white py-4 rounded-2xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            {loading ? (
+                                <div className="flex items-center justify-center space-x-2">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                    <span>Processing...</span>
+                                </div>
                             ) : (
-                                <span className="font-medium">Select</span>
+                                "Swap Now"
                             )}
-                            <ChevronDownIcon className="w-4 h-4 ml-1 text-gray-400" />
                         </button>
                     </div>
                 </div>
-
-                <button
-                    onClick={handleSwap}
-                    disabled={!fromToken || !toToken || !amount}
-                    className="w-full mt-6 bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-medium disabled:opacity-50"
-                >
-                    {loading ? "Processing..." : "Swap Now"}
-                </button>
             </div>
 
             {/* Token Selection Modal */}
@@ -358,14 +428,14 @@ export default function SwapTokensPage() {
                 onClose={() => setShowTokenModal(null)}
                 title={`Select ${showTokenModal === "from" ? "From" : "To"} Token`}
             >
-                <div className="relative mb-4">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
+                <div className="relative mb-6">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
                         <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
                     </div>
                     <input
                         type="text"
                         placeholder="Search tokens..."
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-violet-300 focus:ring-4 focus:ring-violet-100 focus:outline-none transition-all"
                         onChange={(e) => loadTokens({ type: "search", searchText: e.target.value })}
                     />
                 </div>
@@ -385,7 +455,7 @@ export default function SwapTokensPage() {
             <Modal
                 isOpen={showDetails}
                 onClose={() => setShowDetails(false)}
-                title="Swap Details"
+                title="Review Swap"
             >
                 <SwapDetailsComponent
                     details={swapEstimate?.details}
@@ -395,16 +465,28 @@ export default function SwapTokensPage() {
                     formattedOutputAmount={swapEstimate?.details?.estimation?.outputAmount || "0.0"}
                 />
 
-                <button
-                    onClick={() => {
-                        // Execute swap logic
-                        executeSwap();
-                        setShowDetails(false);
-                    }}
-                    className="w-full mt-4 bg-violet-600 hover:bg-violet-700 text-white py-2 rounded-lg"
-                >
-                    Confirm Swap
-                </button>
+                <div className="flex space-x-3 mt-6">
+                    <button
+                        onClick={() => setShowDetails(false)}
+                        className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={executeSwap}
+                        disabled={loading}
+                        className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white py-3 px-4 rounded-xl font-medium disabled:opacity-50 transition-all"
+                    >
+                        {loading ? (
+                            <div className="flex items-center justify-center space-x-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Confirming...</span>
+                            </div>
+                        ) : (
+                            "Confirm Swap"
+                        )}
+                    </button>
+                </div>
             </Modal>
             {/* Success Modal */}
             <SuccessModal
