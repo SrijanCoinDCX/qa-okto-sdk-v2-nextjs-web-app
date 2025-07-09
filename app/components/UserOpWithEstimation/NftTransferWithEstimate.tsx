@@ -10,7 +10,7 @@ type NFTTransferFormData = {
     nftId: string;
     recipientWalletAddress: string;
     amount: string;
-    nftType: string;
+    nftType: string | null;  // Made nullable
     feePayerAddress: string;
 };
 
@@ -41,7 +41,7 @@ const NFTTransferEstimate = () => {
         nftId: '',
         recipientWalletAddress: '',
         amount: '1',
-        nftType: 'ERC721',
+        nftType: null,  // Initialized as null
         feePayerAddress: ''
     });
 
@@ -71,7 +71,7 @@ const NFTTransferEstimate = () => {
         fetchInitialData();
     }, [oktoClient]);
 
-    const updateFormData = (field: keyof NFTTransferFormData, value: string) => {
+    const updateFormData = (field: keyof NFTTransferFormData, value: string | null) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         setError('');
     };
@@ -102,7 +102,7 @@ const NFTTransferEstimate = () => {
                 nftId: formData.nftId || '',
                 recipientWalletAddress: formData.recipientWalletAddress as `0x${string}`,
                 amount: BigInt(formData.amount),
-                nftType: formData.nftType as 'ERC721' | 'ERC1155',
+                nftType: formData.nftType as 'ERC721' | 'ERC1155',  // Safe cast since validated
             };
 
             const result = await nftTransferWithEstimate(
@@ -161,7 +161,7 @@ const NFTTransferEstimate = () => {
             nftId: '',
             recipientWalletAddress: '',
             amount: '1',
-            nftType: 'ERC721',
+            nftType: null,  // Reset to null
             feePayerAddress: ''
         });
     };
@@ -257,10 +257,11 @@ const NFTTransferEstimate = () => {
                             </label>
                             <div className="relative">
                                 <select
-                                    value={formData.nftType}
-                                    onChange={(e) => updateFormData('nftType', e.target.value)}
+                                    value={formData.nftType || ''}
+                                    onChange={(e) => updateFormData('nftType', e.target.value || null)}
                                     className="w-full p-3 border border-gray-300 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 >
+                                    <option value="">Select NFT Type</option>
                                     <option value="ERC721">ERC721 (Unique NFTs)</option>
                                     <option value="ERC1155">ERC1155 (Multi-token)</option>
                                 </select>
