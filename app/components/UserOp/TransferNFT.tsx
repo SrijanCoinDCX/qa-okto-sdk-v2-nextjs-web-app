@@ -172,7 +172,7 @@ function TransferNFT() {
   // Validation function
   const validateFormData = (): {
     caip2Id: string;
-    collectionAddress: Address;
+    collectionAddress: string;
     nftId: string;
     recipientWalletAddress: Address;
     amount: number;
