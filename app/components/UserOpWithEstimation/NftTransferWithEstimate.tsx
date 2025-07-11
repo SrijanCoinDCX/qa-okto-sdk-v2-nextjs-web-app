@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ArrowRight, RefreshCw, Check, AlertCircle, Copy, ExternalLink, Image } from 'lucide-react';
-import { getChains, getPortfolio, GetSupportedNetworksResponseData, useOkto, UserOp, UserPortfolioData } from '@okto_web3/react-sdk';
+import { getChains, getPortfolioNFT, GetSupportedNetworksResponseData, useOkto, UserOp } from '@okto_web3/react-sdk';
 import { NFTTransferIntentParams, nftTransferWithEstimate } from '@okto_web3/react-sdk/userop';
 
 // Types
+type NFTData = {
+    address: string;
+    nft_id: string;
+    nft_type: string;
+    caipId: string;
+    name: string;
+    image: string;
+    quantity: string;
+};
+
 type NFTTransferFormData = {
     selectedChain: string;
+    selectedNFT: string;
     collectionAddress: string;
     nftId: string;
     recipientWalletAddress: string;
-    amount: string;
-    nftType: string | null;  // Made nullable
+    amount: number | string;
+    nftType: string | null;  // Explicitly nullable
     feePayerAddress: string;
 };
 
@@ -33,10 +44,12 @@ const NFTTransferEstimate = () => {
     // State management
     const [currentStep, setCurrentStep] = useState(1);
     const [chains, setChains] = useState<GetSupportedNetworksResponseData[]>([]);
-    const [portfolio, setPortfolio] = useState<UserPortfolioData | null>(null);
+    const [nftPortfolio, setNftPortfolio] = useState<NFTData[]>([]);
+    const [filteredNFTs, setFilteredNFTs] = useState<NFTData[]>([]);
 
     const [formData, setFormData] = useState<NFTTransferFormData>({
         selectedChain: '',
+        selectedNFT: '',
         collectionAddress: '',
         nftId: '',
         recipientWalletAddress: '',
@@ -51,19 +64,34 @@ const NFTTransferEstimate = () => {
 
     // UI state
     const [loading, setLoading] = useState(false);
+    const [loadingNFTs, setLoadingNFTs] = useState(false);
     const [error, setError] = useState('');
     const [showEstimateDetails, setShowEstimateDetails] = useState(false);
+    const [sponsorshipEnabled, setSponsorshipEnabled] = useState(false);
 
     // Fetch initial data
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const [chainsData, portfolioData] = await Promise.all([
+                const [chainsData, nftData] = await Promise.all([
                     getChains(oktoClient),
-                    getPortfolio(oktoClient)
+                    getPortfolioNFT(oktoClient)
                 ]);
+                
                 setChains(chainsData);
-                setPortfolio(portfolioData);
+                
+                // Process NFT data
+                const processedNfts = nftData.map((nft) => ({
+                    address: nft.collectionAddress,
+                    nft_id: nft.nftId,
+                    nft_type: nft.entityType,
+                    caipId: nft.caipId,
+                    name: nft.nftName,
+                    image: nft.image,
+                    quantity: nft.quantity,
+                }));
+                
+                setNftPortfolio(processedNfts);
             } catch (err) {
                 setError('Failed to fetch initial data');
             }
@@ -71,17 +99,91 @@ const NFTTransferEstimate = () => {
         fetchInitialData();
     }, [oktoClient]);
 
+    // Update sponsorship when chain changes
+    useEffect(() => {
+        const chain = chains.find(c => c.caipId === formData.selectedChain);
+        setSponsorshipEnabled(chain?.sponsorshipEnabled || false);
+    }, [formData.selectedChain, chains]);
+
+    // Filter NFTs when chain is selected
+    useEffect(() => {
+        if (!formData.selectedChain) {
+            setFilteredNFTs([]);
+            return;
+        }
+
+        setLoadingNFTs(true);
+        
+        const filtered = nftPortfolio.filter(nft => nft.caipId === formData.selectedChain);
+        setFilteredNFTs(filtered);
+        
+        // Reset NFT selection when chain changes
+        setFormData(prev => ({
+            ...prev,
+            selectedNFT: '',
+            collectionAddress: '',
+            nftId: '',
+            nftType: null,
+            amount: '1'
+        }));
+        
+        setLoadingNFTs(false);
+    }, [formData.selectedChain, nftPortfolio]);
+
     const updateFormData = (field: keyof NFTTransferFormData, value: string | null) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         setError('');
+    };
+
+    const handleChainChange = (chainCaipId: string) => {
+        updateFormData('selectedChain', chainCaipId);
+    };
+
+    const handleNFTSelection = (selectedValue: string) => {
+        updateFormData('selectedNFT', selectedValue);
+        
+        if (!selectedValue) {
+            // Reset all NFT-related fields
+            updateFormData('collectionAddress', '');
+            updateFormData('nftId', '');
+            updateFormData('nftType', null);
+            updateFormData('amount', '1');
+            return;
+        }
+
+        const [selectedAddress, selectedNftId] = selectedValue.split('-');
+        const selectedNft = filteredNFTs.find(
+            (nft) => nft.address === selectedAddress && nft.nft_id === selectedNftId
+        );
+
+        if (selectedNft) {
+            updateFormData('collectionAddress', selectedNft.address);
+            updateFormData('nftId', selectedNft.nft_id);
+            updateFormData('nftType', selectedNft.nft_type || 'ERC721');
+            
+            // Set amount based on NFT type
+            if (selectedNft.nft_type === 'ERC721') {
+                updateFormData('amount', '1');
+            } else {
+                updateFormData('amount', Math.min(parseFloat(selectedNft.quantity), 1).toString());
+            }
+        }
     };
 
     const validateForm = () => {
         if (!formData.selectedChain) return 'Please select a network';
         if (!formData.collectionAddress) return 'Please enter a valid collection address';
         if (!formData.recipientWalletAddress) return 'Please enter a valid recipient address';
-        if (!formData.amount || Number(formData.amount) <= 0) return 'Please enter a valid amount';
-        if (formData.nftType === 'ERC721' && !formData.nftId) return 'NFT ID is required for ERC721 tokens';
+        if (!formData.amount) return 'Please enter a valid amount';
+        
+        // NFT ID is required regardless of type
+        if (!formData.nftId) return 'NFT ID is required';
+        
+        // If type is specified, validate based on type
+        if (formData.nftType === 'ERC721' && Number(formData.amount) !== 1) {
+            return 'Amount must be 1 for ERC721 NFTs';
+        }
+        
         return null;
     };
 
@@ -99,10 +201,10 @@ const NFTTransferEstimate = () => {
             const params: NFTTransferIntentParams = {
                 caip2Id: formData.selectedChain,
                 collectionAddress: formData.collectionAddress as `0x${string}`,
-                nftId: formData.nftId || '',
+                nftId: formData.nftId,
                 recipientWalletAddress: formData.recipientWalletAddress as `0x${string}`,
-                amount: BigInt(formData.amount),
-                nftType: formData.nftType as 'ERC721' | 'ERC1155',  // Safe cast since validated
+                amount: Number(formData.amount),
+                nftType: formData.nftType && formData.nftType !== '' ? (formData.nftType as 'ERC721' | 'ERC1155') : undefined
             };
 
             const result = await nftTransferWithEstimate(
@@ -157,11 +259,12 @@ const NFTTransferEstimate = () => {
         setError('');
         setFormData({
             selectedChain: '',
+            selectedNFT: '',
             collectionAddress: '',
             nftId: '',
             recipientWalletAddress: '',
             amount: '1',
-            nftType: null,  // Reset to null
+            nftType: null,
             feePayerAddress: ''
         });
     };
@@ -171,6 +274,9 @@ const NFTTransferEstimate = () => {
     };
 
     const selectedChainData = chains.find(c => c.caipId === formData.selectedChain);
+    const selectedNFTData = filteredNFTs.find(nft => 
+        `${nft.address}-${nft.nft_id}` === formData.selectedNFT
+    );
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
@@ -178,9 +284,9 @@ const NFTTransferEstimate = () => {
             <div className="mb-8">
                 <div className="flex items-center mb-2">
                     <Image className="text-purple-600 mr-3" size={32} />
-                    <h1 className="text-3xl font-bold text-gray-900">NFT Transfer</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">NFT Transfer with Estimate</h1>
                 </div>
-                <p className="text-gray-600">Transfer NFTs with gas estimation and optimization</p>
+                <p className="text-gray-600">Transfer NFTs with automatic portfolio detection and gas estimation</p>
             </div>
 
             {/* Progress Steps */}
@@ -222,98 +328,172 @@ const NFTTransferEstimate = () => {
             {/* Step 1: Transfer Setup */}
             {currentStep === 1 && (
                 <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Network Selection */}
+                    {/* Network Selection */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Network
+                        </label>
+                        <div className="relative">
+                            <select
+                                value={formData.selectedChain}
+                                onChange={(e) => handleChainChange(e.target.value)}
+                                className="w-full p-3 border border-gray-300 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            >
+                                <option value="">Select Network</option>
+                                {chains.map((chain) => (
+                                    <option key={chain.chainId} value={chain.caipId}>
+                                        {chain.networkName}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-3 text-gray-400" size={20} />
+                        </div>
+                        {selectedChainData && (
+                            <div className={`mt-2 p-2 rounded text-sm ${sponsorshipEnabled ? 'bg-green-50 text-green-800' : 'bg-yellow-50 text-yellow-800'}`}>
+                                {sponsorshipEnabled ? '✅ Gas sponsorship available' : '⚠️ Gas sponsorship not available'}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* NFT Selection */}
+                    {formData.selectedChain && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Network
+                                Select NFT from Your Portfolio
                             </label>
                             <div className="relative">
                                 <select
-                                    value={formData.selectedChain}
-                                    onChange={(e) => updateFormData('selectedChain', e.target.value)}
+                                    value={formData.selectedNFT}
+                                    onChange={(e) => handleNFTSelection(e.target.value)}
                                     className="w-full p-3 border border-gray-300 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    disabled={loadingNFTs}
                                 >
-                                    <option value="">Select Network</option>
-                                    {chains.map((chain) => (
-                                        <option key={chain.chainId} value={chain.caipId}>
-                                            {chain.networkName}
+                                    <option value="">
+                                        {loadingNFTs ? 'Loading NFTs...' : 'Select an NFT or enter details manually'}
+                                    </option>
+                                    {filteredNFTs.map((nft) => (
+                                        <option
+                                            key={`${nft.address}-${nft.nft_id}`}
+                                            value={`${nft.address}-${nft.nft_id}`}
+                                        >
+                                            {nft.name || `NFT #${nft.nft_id}`} ({nft.nft_type}) - Qty: {nft.quantity}
                                         </option>
                                     ))}
                                 </select>
                                 <ChevronDown className="absolute right-3 top-3 text-gray-400" size={20} />
                             </div>
-                            {selectedChainData && (
-                                <div className={`mt-2 p-2 rounded text-sm ${selectedChainData.sponsorshipEnabled ? 'bg-green-50 text-green-800' : 'bg-yellow-50 text-yellow-800'}`}>
-                                    {selectedChainData.sponsorshipEnabled ? '✅ Gas sponsorship available' : '⚠️ Gas sponsorship not available'}
+                            {filteredNFTs.length === 0 && !loadingNFTs && formData.selectedChain && (
+                                <div className="mt-2 p-2 bg-yellow-50 text-yellow-800 rounded text-sm">
+                                    No NFTs found for this network. You can enter details manually below.
                                 </div>
                             )}
                         </div>
+                    )}
 
-                        {/* NFT Type Selection */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                NFT Type
-                            </label>
-                            <div className="relative">
-                                <select
-                                    value={formData.nftType || ''}
-                                    onChange={(e) => updateFormData('nftType', e.target.value || null)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                >
-                                    <option value="">Select NFT Type</option>
-                                    <option value="ERC721">ERC721 (Unique NFTs)</option>
-                                    <option value="ERC1155">ERC1155 (Multi-token)</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-3 text-gray-400" size={20} />
+                    {/* Show selected NFT preview */}
+                    {selectedNFTData && (
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                            <h4 className="font-medium text-blue-900 mb-2">Selected NFT</h4>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span className="text-blue-700">Name:</span>
+                                    <span className="ml-2 font-medium">{selectedNFTData.name || 'Unnamed NFT'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-blue-700">Type:</span>
+                                    <span className="ml-2 font-medium">{selectedNFTData.nft_type}</span>
+                                </div>
+                                <div>
+                                    <span className="text-blue-700">ID:</span>
+                                    <span className="ml-2 font-medium">{selectedNFTData.nft_id}</span>
+                                </div>
+                                <div>
+                                    <span className="text-blue-700">Available:</span>
+                                    <span className="ml-2 font-medium">{selectedNFTData.quantity}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                    {/* Collection Address */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Collection Address
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.collectionAddress}
-                            onChange={(e) => updateFormData('collectionAddress', e.target.value)}
-                            placeholder="0x..."
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                    </div>
+                    {/* Manual Entry Section */}
+                    <div className="border-t pt-6">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">
+                            {formData.selectedNFT ? 'Or Override NFT Details' : 'Manual NFT Details'}
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Collection Address */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Collection Address
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.collectionAddress}
+                                    onChange={(e) => updateFormData('collectionAddress', e.target.value)}
+                                    placeholder="0x..."
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* NFT ID */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                NFT ID {formData.nftType === 'ERC721' && <span className="text-red-500">*</span>}
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.nftId}
-                                onChange={(e) => updateFormData('nftId', e.target.value)}
-                                placeholder={formData.nftType === 'ERC721' ? 'Required for ERC721' : 'Optional for ERC1155'}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            />
-                        </div>
+                            {/* NFT Type (Optional) */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    NFT Type (Optional)
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.nftType || ''}
+                                        onChange={(e) => updateFormData('nftType', e.target.value || null)}
+                                        className="w-full p-3 border border-gray-300 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    >
+                                        <option value="">Not specified</option>
+                                        <option value="ERC721">ERC721 (Unique NFTs)</option>
+                                        <option value="ERC1155">ERC1155 (Multi-token)</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-3 text-gray-400" size={20} />
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Helps optimize transaction. Not required for estimation.
+                                </p>
+                            </div>
 
-                        {/* Amount */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Amount
-                            </label>
-                            <input
-                                type="number"
-                                value={formData.amount}
-                                onChange={(e) => updateFormData('amount', e.target.value)}
-                                placeholder="1"
-                                min="1"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            />
-                            <div className="mt-1 text-sm text-gray-500">
-                                {formData.nftType === 'ERC721' ? 'Always 1 for ERC721' : 'Quantity for ERC1155'}
+                            {/* NFT ID */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    NFT ID (Required)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.nftId}
+                                    onChange={(e) => updateFormData('nftId', e.target.value)}
+                                    placeholder="Enter NFT ID"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            {/* Amount */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Amount
+                                </label>
+                                <input
+                                    type="number"
+                                    value={formData.amount}
+                                    onChange={(e) => updateFormData('amount', e.target.value)}
+                                    placeholder="1"
+                                    min="1"
+                                    max={selectedNFTData ? selectedNFTData.quantity : undefined}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                                <div className="mt-1 text-sm text-gray-500">
+                                    {formData.nftType === 'ERC721' 
+                                        ? 'Always 1 for ERC721' 
+                                        : selectedNFTData 
+                                            ? `Max: ${selectedNFTData.quantity}` 
+                                            : 'Quantity for ERC1155'
+                                    }
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -367,7 +547,6 @@ const NFTTransferEstimate = () => {
             {/* Step 2: Review & Execute */}
             {currentStep === 2 && estimate && (
                 <div className="space-y-6">
-                    {/* Transaction Summary */}
                     <div className="bg-gray-50 p-6 rounded-lg">
                         <h3 className="text-lg font-semibold mb-4">Transaction Summary</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -377,7 +556,7 @@ const NFTTransferEstimate = () => {
                             </div>
                             <div>
                                 <span className="text-gray-600">NFT Type:</span>
-                                <span className="ml-2 font-medium">{formData.nftType}</span>
+                                <span className="ml-2 font-medium">{formData.nftType || 'Not specified'}</span>
                             </div>
                             <div className="md:col-span-2">
                                 <span className="text-gray-600">Collection:</span>
@@ -385,7 +564,7 @@ const NFTTransferEstimate = () => {
                             </div>
                             <div>
                                 <span className="text-gray-600">NFT ID:</span>
-                                <span className="ml-2 font-medium">{formData.nftId || 'N/A'}</span>
+                                <span className="ml-2 font-medium">{formData.nftId}</span>
                             </div>
                             <div>
                                 <span className="text-gray-600">Amount:</span>
@@ -395,10 +574,15 @@ const NFTTransferEstimate = () => {
                                 <span className="text-gray-600">Recipient:</span>
                                 <span className="ml-2 font-medium font-mono text-xs">{formData.recipientWalletAddress}</span>
                             </div>
+                            <div className="md:col-span-2">
+                                <span className="text-gray-600">Fee Payer:</span>
+                                <span className="ml-2 font-medium font-mono text-xs">
+                                    {formData.feePayerAddress || 'Default (User)'}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Gas Estimate */}
                     <div className="border border-gray-200 rounded-lg p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">Gas Estimation</h3>
@@ -492,10 +676,10 @@ const NFTTransferEstimate = () => {
                             {loading ? (
                                 <>
                                     <RefreshCw className="animate-spin mr-2" size={20} />
-                                    Executing...
+                                    Execute Transaction
                                 </>
                             ) : (
-                                'Execute Transaction'
+                                'Confirm Transfer'
                             )}
                         </button>
                     </div>
@@ -538,8 +722,7 @@ const NFTTransferEstimate = () => {
                             onClick={() => window.location.href = '/'} 
                             className="bg-gray-200 text-gray-800 py-2 px-6 rounded-lg font-medium hover:bg-gray-300 flex items-center"
                         >
-                            View on Explorer
-                            <ExternalLink className="ml-2" size={16} />
+                            Return to Home
                         </button>
                     </div>
                 </div>
