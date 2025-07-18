@@ -172,7 +172,7 @@ function TransferNFT() {
   // Validation function
   const validateFormData = (): {
     caip2Id: string;
-    collectionAddress: Address;
+    collectionAddress: string;
     nftId: string;
     recipientWalletAddress: Address;
     amount: number;
@@ -252,7 +252,7 @@ function TransferNFT() {
 
     try {
       const transferParams = validateFormData();
-      const jobId = await nftTransferMain(oktoClient, transferParams);
+      const jobId = await nftTransferMain(oktoClient, transferParams, feePayerAddress as `0x${string}`);
       setJobId(jobId);
       await handleGetOrderHistory(jobId);
       showModal("jobId");

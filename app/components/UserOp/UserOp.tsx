@@ -46,6 +46,12 @@ const UserOp = () => {
                 >
                     APTOS Raw transaction
                 </Link>
+                <Link
+                    href="/pages/svmrawtxn"
+                    className="flex-1 h-24 w-58 px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-center flex items-center justify-center"
+                >
+                    SVM Raw transaction
+                </Link>
             </div>
         </div>
     );

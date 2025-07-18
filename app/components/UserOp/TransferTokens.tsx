@@ -124,12 +124,12 @@ function TransferTokens() {
     if (!token) throw new Error("Please select a valid token");
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
       throw new Error("Please enter a valid amount");
-    if (!recipient || !recipient.startsWith("0x"))
+    if (!recipient)
       throw new Error("Please enter a valid recipient address");
 
     return {
       amount: BigInt(amount),
-      recipient: recipient as Address,
+      recipient: recipient as Address | string,
       token: token.address as Address,
       caip2Id: selectedChain,
     };
