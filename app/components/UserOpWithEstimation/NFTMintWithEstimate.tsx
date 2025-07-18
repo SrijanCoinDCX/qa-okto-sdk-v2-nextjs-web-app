@@ -100,7 +100,7 @@ const NFTMintEstimate = () => {
         if (!formData.selectedChain) return 'Please select a network';
         if (!formData.nftName.trim()) return 'Please enter an NFT name';
         if (!formData.uri.trim()) return 'Please enter a valid URI';
-        if (!formData.recipientWalletAddress || !formData.recipientWalletAddress.startsWith('0x')) {
+        if (!formData.recipientWalletAddress) {
             return 'Please enter a valid recipient address';
         }
         
