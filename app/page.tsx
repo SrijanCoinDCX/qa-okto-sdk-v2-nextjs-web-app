@@ -161,6 +161,21 @@ export default function Home() {
     }
   }
 
+  async function handleLoginUsingApple() {
+    try {
+      const result = await oktoClient.loginUsingSocial('apple');
+      console.log("Apple login result:", result);
+      if (typeof result === "string" && result) {
+        setUserSWA(result);
+        setIsAuthenticated(true);
+      }
+      return { result };
+    } catch (error) {
+      console.error("Apple login failed:", error);
+      return { error };
+    }
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center space-y-6 p-12 bg-violet-200">
       <ConfigDetailsAndSetUp userSWA={userSWA} config={config} setConfig={setConfig} />
@@ -183,6 +198,7 @@ export default function Home() {
         setUserSWA={setUserSWA}
         handleAuthenticateWebView={handleWebViewAuthentication}
         handleLoginUsingGoogle={handleLoginUsingGoogle}
+        handleLoginUsingApple={handleLoginUsingApple}
         setIsJWTModalOpen={setIsJWTModalOpen}
         isJWTModalOpen={isJWTModalOpen}
         handleLogout={handleLogout}

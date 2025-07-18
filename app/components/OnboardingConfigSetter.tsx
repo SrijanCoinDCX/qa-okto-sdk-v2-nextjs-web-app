@@ -440,7 +440,7 @@ const OnboardingConfigurator = ({ themeConfig, setThemeConfig }: OnboardingConfi
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <h4 className="text-gray-700 mb-3 font-medium">Social Logins:</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {(['google', 'steam', 'twitter'] as const).map((type) => (
+                          {(['google', 'steam', 'twitter', 'apple'] as const).map((type) => (
                             <label key={type} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200 hover:border-purple-500/50 transition-colors cursor-pointer">
                               <input
                                 type="checkbox"
